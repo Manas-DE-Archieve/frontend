@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
 });
 
-api.interceptors.request.use(config => {
+// Автоматически добавляем токен ко всем запросам
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -12,59 +13,69 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-const handleAuth = (tokens) => {
-  localStorage.setItem('access_token', tokens.access_token);
-  localStorage.setItem('refresh_token', tokens.refresh_token);
-};
-
 export const authApi = {
   login: async (email, password) => {
-    const { data } = await api.post('/api/auth/login', { email, password });
-    handleAuth(data);
+    const { data } = await api.post('/auth/login', { email, password });
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
     return data;
   },
-  register: (email, password) => api.post('/api/auth/register', { email, password }),
+  register: async (email, password) => {
+    return api.post('/auth/register', { email, password });
+  },
+  me: () => api.get('/auth/me'),
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
   },
-  me: () => api.get('/api/auth/me'),
 };
 
 export const personsApi = {
-  list: (params) => api.get('/api/persons', { params }),
-  get: (id) => api.get(`/api/persons/${id}`),
-  create: (data) => api.post('/api/persons', data),
-  update: (id, data) => api.put(`/api/persons/${id}`, data),
-  delete: (id) => api.delete(`/api/persons/${id}`),
-  setStatus: (id, status) => api.patch(`/api/persons/${id}/status`, { status }),
-  extractFromDocument: (file) => {
+  list: (params) => api.get('/persons', { params }),
+  get: (id) => api.get(`/persons/${id}`),
+  regionStats: () => api.get('/persons/stats/regions'),
+  create: (data) => api.post('/persons', data),
+  update: (id, data) => api.put(`/persons/${id}`, data),
+  delete: (id) => api.delete(`/persons/${id}`),
+  setStatus: (id, status) => api.patch(`/persons/${id}/status`, { status }),
+  extract: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post('/api/persons/extract', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  }
-};
-
-export const documentsApi = {
-  list: (params) => api.get('/api/documents', { params }),
-  get: (id) => api.get(`/api/documents/${id}`),
-  upload: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/api/documents/upload', formData, {
+    return api.post('/persons/extract', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  delete: (id) => api.delete(`/api/documents/${id}`),
+};
+
+export const documentsApi = {
+  checkDuplicates: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/documents/check-duplicates', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  upload: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  list: (params) => api.get('/documents', { params }),
+  get: (id) => api.get(`/documents/${id}`),
+  delete: (id) => api.delete(`/documents/${id}`),
 };
 
 export const chatApi = {
-  createSession: () => api.post('/api/chat/sessions'),
+  createSession: () => api.post('/chat/sessions'),
+  listSessions: (params) => api.get('/chat/sessions', { params }),
+  getMessages: (sessionId) => api.get(`/chat/sessions/${sessionId}`),
 };
 
 export const adminApi = {
-  listUsers: (params) => api.get('/api/admin/users', { params }),
-  updateUserRole: (userId, role) => api.patch(`/api/admin/users/${userId}/role`, { role }),
+  listUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
 };
+
+export default api;

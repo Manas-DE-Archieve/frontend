@@ -12,7 +12,11 @@ const Field = ({ label, value }) =>
     </div>
   ) : null
 
-const STATUS_CLASS = { verified: 'badge-verified', pending: 'badge-pending', rejected: 'badge-rejected' }
+const STATUS_CLASS = {
+  verified: 'badge-verified',
+  pending: 'badge-pending',
+  rejected: 'badge-rejected'
+}
 
 export default function PersonPage() {
   const { id } = useParams()
@@ -29,10 +33,23 @@ export default function PersonPage() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const handleSetStatus = async (newStatus) => {
+    try {
+      await personsApi.setStatus(id, newStatus)
+      setPerson(prev => ({ ...prev, status: newStatus }))
+    } catch (error) {
+      alert('Ошибка при смене статуса. Убедитесь, что у вас есть права модератора.')
+    }
+  }
+
   const handleDelete = async () => {
-    if (!confirm('Удалить запись?')) return
-    await personsApi.delete(id)
-    navigate('/')
+    if (!confirm('Вы уверены, что хотите удалить эту запись навсегда?')) return
+    try {
+      await personsApi.delete(id)
+      navigate('/')
+    } catch (error) {
+      alert('Ошибка при удалении.')
+    }
   }
 
   if (loading) return (
@@ -56,7 +73,7 @@ export default function PersonPage() {
     </div>
   )
 
-  const canDelete = user && ['moderator', 'super_admin'].includes(user.role)
+  const isModerator = user && ['moderator', 'super_admin'].includes(user.role)
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
@@ -74,7 +91,6 @@ export default function PersonPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary-900/60 to-primary-700/80 pointer-events-none" />
           <div className="relative flex items-start justify-between gap-4">
             <div>
-              {/* Decorative rule */}
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-4 h-px bg-primary-300/50" />
                 <span className="text-primary-200 text-[10px] tracking-[0.2em] uppercase font-medium">Личное дело</span>
@@ -93,6 +109,43 @@ export default function PersonPage() {
             </span>
           </div>
         </div>
+
+        {/* Панель модератора */}
+        {isModerator && (
+          <div className="bg-slate-50 border-b border-slate-200 p-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
+                🛡️
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Управление записью</p>
+                <p className="text-[10px] text-slate-500">Установите официальный статус</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleSetStatus('verified')}
+                disabled={person.status === 'verified'}
+                className="btn-outline !py-1.5 !px-3 !text-xs !bg-emerald-50 !border-emerald-200 !text-emerald-700 hover:!bg-emerald-600 hover:!text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ✓ Верифицировать
+              </button>
+              <button
+                onClick={() => handleSetStatus('rejected')}
+                disabled={person.status === 'rejected'}
+                className="btn-outline !py-1.5 !px-3 !text-xs !bg-amber-50 !border-amber-200 !text-amber-700 hover:!bg-amber-500 hover:!text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ✗ Отклонить
+              </button>
+              <button
+                onClick={handleDelete}
+                className="btn-outline !py-1.5 !px-3 !text-xs !bg-red-50 !border-red-200 !text-red-700 hover:!bg-red-600 hover:!text-white"
+              >
+                🗑 Удалить
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Body */}
         <div className="p-7">
@@ -119,17 +172,6 @@ export default function PersonPage() {
           {person.source && (
             <div className="mt-5 pt-5 border-t border-slate-100">
               <Field label={t('person.source')} value={person.source} />
-            </div>
-          )}
-
-          {canDelete && (
-            <div className="flex gap-3 mt-7 pt-7 border-t border-slate-100">
-              <button
-                onClick={handleDelete}
-                className="btn-outline !text-red-600 !border-red-200 hover:!bg-red-50"
-              >
-                🗑 {t('person.delete')}
-              </button>
             </div>
           )}
         </div>

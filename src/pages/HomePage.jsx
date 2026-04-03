@@ -105,7 +105,7 @@ export default function HomePage() {
           )}
         </div>
         <div className="space-y-4">
-          <MapVisualization persons={persons} />
+          <MapVisualization />
           <div className="card p-5 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-4 h-px bg-primary-300/50" />
