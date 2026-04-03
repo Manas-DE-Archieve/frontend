@@ -7,14 +7,14 @@ import { useAuth } from '../hooks/useAuth'
 export default function ChatPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [sessionId, setSessionId] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('')
-  const [streaming, setStreaming] = useState(false)
+  const [sessionId, setSessionId]   = useState(null)
+  const [messages, setMessages]     = useState([])
+  const [input, setInput]           = useState('')
+  const [streaming, setStreaming]   = useState(false)
   const bottomRef = useRef(null)
-  const esRef = useRef(null)
+  const esRef     = useRef(null)
+  const textareaRef = useRef(null)
 
-  // Create or load session on mount
   useEffect(() => {
     chatApi.createSession()
       .then(({ data }) => setSessionId(data.id))
@@ -38,16 +38,13 @@ export default function ChatPage() {
     setInput('')
     setStreaming(true)
 
-    // Add user message immediately
     setMessages(prev => [...prev, { role: 'user', content: question }])
-    // Placeholder for assistant response
     setMessages(prev => [...prev, { role: 'assistant', content: '', sources: null, _streaming: true }])
 
     try {
       const token = localStorage.getItem('access_token')
       const url = `/api/chat/sessions/${sessionId}/message`
 
-      // Send via fetch POST, stream response
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -66,7 +63,7 @@ export default function ChatPage() {
         if (done) break
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
-        buffer = lines.pop() // keep incomplete line
+        buffer = lines.pop()
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
@@ -105,6 +102,7 @@ export default function ChatPage() {
       })
     } finally {
       setStreaming(false)
+      textareaRef.current?.focus()
     }
   }
 
@@ -113,34 +111,52 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 flex flex-col h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-stone-800">{t('chat.title')}</h1>
-        <button onClick={newSession} className="btn-outline !text-xs">
+      <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-200">
+        <div>
+          <h1 className="font-serif text-2xl font-bold text-primary-800">{t('chat.title')}</h1>
+          <p className="text-xs text-slate-400 mt-0.5">Ответы основаны на загруженных архивных документах</p>
+        </div>
+        <button
+          onClick={newSession}
+          className="btn-outline !text-xs !py-2 !px-3.5"
+        >
           + {t('chat.newSession')}
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto space-y-5 pb-4 pr-1">
         {messages.length === 0 && (
-          <div className="text-center py-16 text-stone-400">
-            <p className="text-4xl mb-3">🗂</p>
-            <p className="text-sm">{t('chat.empty')}</p>
+          <div className="flex flex-col items-center justify-center h-full text-center pb-12">
+            <div className="w-16 h-16 rounded-2xl bg-primary-800/10 flex items-center justify-center text-3xl mb-4">
+              🗂
+            </div>
+            <p className="font-serif text-lg text-slate-500 mb-1">{t('chat.empty')}</p>
+            <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+              Задайте вопрос об архивных документах, репрессиях или конкретных людях
+            </p>
           </div>
         )}
 
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
+            {/* Assistant avatar */}
+            {msg.role === 'assistant' && (
+              <div className="shrink-0 w-7 h-7 rounded-lg bg-primary-800 flex items-center justify-center text-primary-200 text-xs font-serif font-bold self-end mb-0.5">
+                А
+              </div>
+            )}
+
+            <div className={`max-w-[82%] space-y-2.5 ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
               <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-primary-500 text-white rounded-tr-sm'
-                  : 'bg-white border border-stone-200 text-stone-800 rounded-tl-sm shadow-sm'
+                  ? 'bg-primary-600 text-white rounded-tr-sm shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-card'
               }`}>
                 {msg.content || (msg._streaming && (
-                  <span className="text-stone-400 italic">{t('chat.thinking')}</span>
+                  <span className="text-slate-400 italic text-xs">{t('chat.thinking')}</span>
                 ))}
                 {msg._streaming && msg.content && <span className="typing-cursor" />}
               </div>
@@ -148,7 +164,9 @@ export default function ChatPage() {
               {/* Sources */}
               {msg.role === 'assistant' && msg.sources?.length > 0 && (
                 <div className="w-full">
-                  <p className="text-xs font-medium text-stone-500 mb-1">{t('chat.sources')}</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">
+                    {t('chat.sources')}
+                  </p>
                   <div className="grid gap-2">
                     {msg.sources.map((s, j) => <SourceCard key={j} source={s} />)}
                   </div>
@@ -160,11 +178,12 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-stone-200 pt-4">
-        <div className="flex gap-2">
+      {/* Input area */}
+      <div className="border-t border-slate-200 pt-4">
+        <div className="flex gap-2 items-end">
           <textarea
-            className="input flex-1 resize-none !py-2.5"
+            ref={textareaRef}
+            className="input flex-1 resize-none !py-3 !leading-relaxed"
             rows={2}
             placeholder={t('chat.placeholder')}
             value={input}
@@ -175,12 +194,17 @@ export default function ChatPage() {
           <button
             onClick={sendMessage}
             disabled={streaming || !input.trim() || !sessionId}
-            className="btn-primary self-end"
+            className="btn-primary self-end !px-4 !py-3 shrink-0"
+            title="Отправить"
           >
-            {streaming ? '⏳' : '↑'}
+            {streaming
+              ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+              : '↑'}
           </button>
         </div>
-        <p className="text-xs text-stone-400 mt-1">Enter — отправить · Shift+Enter — новая строка</p>
+        <p className="text-[10px] text-slate-400 mt-1.5 ml-1">
+          Enter — отправить · Shift+Enter — новая строка
+        </p>
       </div>
     </div>
   )

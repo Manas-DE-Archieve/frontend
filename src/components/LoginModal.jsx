@@ -1,17 +1,22 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 
-export default function LoginPage() {
+export default function LoginModal({ onClose }) {
   const { t } = useTranslation()
   const { login, register } = useAuth()
-  const navigate = useNavigate()
-  const [mode, setMode]       = useState('login')
-  const [email, setEmail]     = useState('')
+  const [mode, setMode]         = useState('login')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError]     = useState('')
-  const [loading, setLoading] = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -20,7 +25,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') await login(email, password)
       else await register(email, password)
-      navigate('/')
+      onClose()
     } catch (err) {
       setError(err.response?.data?.detail || t('common.error'))
     } finally {
@@ -29,28 +34,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[88vh] flex items-center justify-center px-4 py-12">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,30,57,0.6)', backdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
       <div className="w-full max-w-sm animate-slide-up">
-        {/* Logo / title block */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary-800 shadow-card-lg mb-4">
-            <span className="font-serif text-2xl font-bold text-primary-200">А</span>
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-700 shadow-card-lg mb-3">
+            <span className="font-serif text-xl font-bold text-primary-200">А</span>
           </div>
-          <h1 className="font-serif text-2xl font-bold text-primary-800">{t('app.title')}</h1>
-          <p className="text-xs text-slate-400 mt-1 tracking-wide">{t('app.subtitle')}</p>
+          <h2 className="font-serif text-xl font-bold text-white">{t('app.title')}</h2>
+          <p className="text-slate-400 text-xs mt-0.5">{t('app.subtitle')}</p>
         </div>
 
-        <div className="card p-7 shadow-card-lg">
+        <div className="card p-6 shadow-card-lg">
           {/* Tab switcher */}
-          <div className="flex rounded-lg overflow-hidden border border-slate-200 mb-6 bg-slate-50">
+          <div className="flex rounded-lg overflow-hidden border border-slate-200 mb-5 bg-slate-50">
             {['login', 'register'].map(m => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
+                type="button"
+                onClick={() => { setMode(m); setError('') }}
                 className={`flex-1 py-2.5 text-sm font-medium tracking-wide transition-all duration-150 ${
                   mode === m
                     ? 'bg-primary-500 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {t(`auth.${m}`)}
@@ -65,6 +75,7 @@ export default function LoginPage() {
                 className="input"
                 type="email"
                 required
+                autoFocus
                 placeholder="example@mail.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -93,7 +104,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full justify-center mt-2 !py-3"
+              className="btn-primary w-full justify-center !py-3"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -105,9 +116,12 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-5">
-          Цифровой мемориал · Кыргызстан 1918–1953
-        </p>
+        <button
+          onClick={onClose}
+          className="mt-3 w-full text-center text-xs text-slate-400 hover:text-slate-200 transition-colors"
+        >
+          Отмена
+        </button>
       </div>
     </div>
   )

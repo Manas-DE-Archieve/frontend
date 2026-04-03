@@ -33,7 +33,7 @@ export default function MapVisualization({ persons = [] }) {
 
   return (
     <div className="card p-4">
-      <h3 className="text-sm font-semibold text-stone-700 mb-3">{t('map.title')}</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-3">{t('map.title')}</h3>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-lg bg-sky-50 border border-sky-100">
         {/* Grid lines */}
         {[40, 41, 42, 43].map(lat => {
@@ -53,7 +53,7 @@ export default function MapVisualization({ persons = [] }) {
             <g key={r.name}>
               <circle
                 cx={x} cy={y} r={radius}
-                fill={r.count > 0 ? '#8b1a1a' : '#d1d5db'}
+                fill={r.count > 0 ? '#004370' : '#d1d5db'}
                 fillOpacity={r.count > 0 ? 0.75 : 0.4}
                 stroke="white" strokeWidth="1.5"
               />
@@ -72,7 +72,7 @@ export default function MapVisualization({ persons = [] }) {
       {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
         {regions.filter(r => r.count > 0).sort((a,b) => b.count - a.count).map(r => (
-          <span key={r.name} className="text-xs text-stone-500">
+          <span key={r.name} className="text-xs text-slate-500">
             {r.name.replace(' область', '')}: <strong className="text-primary-500">{r.count}</strong>
           </span>
         ))}

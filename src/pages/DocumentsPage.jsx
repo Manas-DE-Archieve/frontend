@@ -4,10 +4,17 @@ import { documentsApi } from '../api'
 import FileUploader from '../components/FileUploader'
 import { useAuth } from '../hooks/useAuth'
 
+const TYPE_ICON  = { pdf: '📕', md: '📝', txt: '📄' }
+const TYPE_COLOR = {
+  pdf: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+  md:  'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+  txt: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+}
+
 export default function DocumentsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [docs, setDocs] = useState([])
+  const [docs, setDocs]       = useState([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -27,42 +34,73 @@ export default function DocumentsPage() {
     load()
   }
 
-  const TYPE_ICON = { pdf: '📕', md: '📝', txt: '📄' }
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold text-stone-800">{t('documents.title')}</h1>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-7">
+      {/* Header */}
+      <div>
+        <h1 className="font-serif text-2xl font-bold text-primary-800">{t('documents.title')}</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Архивные документы, использованные для обучения ИИ-архивариуса
+        </p>
+      </div>
 
-      {user && <FileUploader onUploaded={load} />}
+      {user && (
+        <div className="card p-5">
+          <p className="field-label mb-3">Загрузить документ</p>
+          <FileUploader onUploaded={load} />
+        </div>
+      )}
 
-      <div className="space-y-2">
-        {loading ? (
-          <p className="text-center text-stone-400 py-8">{t('common.loading')}</p>
-        ) : docs.length === 0 ? (
-          <div className="card p-12 text-center text-stone-400">
-            <p className="text-3xl mb-2">📭</p>
-            <p>{t('documents.empty')}</p>
-          </div>
-        ) : docs.map(doc => (
-          <div key={doc.id} className="card p-4 flex items-center gap-3">
-            <span className="text-2xl">{TYPE_ICON[doc.file_type] || '📄'}</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-stone-800 truncate">{doc.filename}</p>
-              <p className="text-xs text-stone-400">
-                {t('documents.uploadedAt')}: {new Date(doc.uploaded_at).toLocaleDateString()}
-              </p>
+      {/* Document list */}
+      <div>
+        <p className="field-label mb-3">Загруженные документы</p>
+        <div className="space-y-2">
+          {loading ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="card p-4 animate-pulse flex gap-3">
+                  <div className="w-8 h-8 skeleton rounded" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 skeleton w-1/2 rounded" />
+                    <div className="h-3 skeleton w-1/3 rounded" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <span className="text-xs text-stone-400 uppercase">{doc.file_type}</span>
-            {user?.role !== 'user' && (
-              <button
-                onClick={() => handleDelete(doc.id)}
-                className="text-red-400 hover:text-red-600 text-sm ml-2"
-              >
-                🗑
-              </button>
-            )}
-          </div>
-        ))}
+          ) : docs.length === 0 ? (
+            <div className="card p-14 text-center">
+              <p className="text-3xl mb-3 opacity-40">🗂</p>
+              <p className="font-serif text-slate-500">{t('documents.empty')}</p>
+              <p className="text-xs text-slate-400 mt-1">Загрузите первый документ выше</p>
+            </div>
+          ) : (
+            docs.map(doc => (
+              <div key={doc.id} className="card-hover p-4 flex items-center gap-4 animate-fade-in">
+                <div className="text-2xl shrink-0">
+                  {TYPE_ICON[doc.file_type] || '📄'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-slate-800 truncate">{doc.filename}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {t('documents.uploadedAt')}: {new Date(doc.uploaded_at).toLocaleDateString('ru-RU')}
+                  </p>
+                </div>
+                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${TYPE_COLOR[doc.file_type] || 'bg-slate-100 text-slate-500'}`}>
+                  {doc.file_type}
+                </span>
+                {user?.role !== 'user' && (
+                  <button
+                    onClick={() => handleDelete(doc.id)}
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors text-sm"
+                    title={t('documents.delete')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

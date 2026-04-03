@@ -34,18 +34,36 @@ export default function FileUploader({ onUploaded }) {
     <div>
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${
-          isDragActive ? 'border-primary-500 bg-primary-50' : 'border-stone-300 hover:border-primary-400'
+        className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${
+          isDragActive
+            ? 'border-primary-400 bg-primary-50/50 shadow-navy scale-[1.01]'
+            : 'border-slate-300 hover:border-primary-300 hover:bg-slate-50'
         } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <input {...getInputProps()} />
-        <div className="text-4xl mb-3">📄</div>
-        <p className="text-stone-600 font-medium">
-          {uploading ? t('documents.uploading') : t('documents.drop')}
+
+        <div className="text-4xl mb-3 transition-transform duration-200 select-none">
+          {isDragActive ? '📂' : '📄'}
+        </div>
+
+        <p className="font-medium text-slate-600">
+          {uploading ? t('documents.uploading') : isDragActive ? 'Отпустите файлы...' : t('documents.drop')}
         </p>
-        <p className="text-xs text-stone-400 mt-1">{t('documents.types')}</p>
+        <p className="text-xs text-slate-400 mt-1.5">
+          {t('documents.types')}
+        </p>
+
+        {uploading && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60">
+            <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
       </div>
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="mt-2.5 text-sm text-red-600 flex items-center gap-1.5">
+          <span>⚠</span>{error}
+        </p>
+      )}
     </div>
   )
 }

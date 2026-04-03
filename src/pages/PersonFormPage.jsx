@@ -21,9 +21,9 @@ export default function PersonFormPage() {
   const { t } = useTranslation()
   const isEdit = Boolean(id)
 
-  const [form, setForm] = useState(EMPTY)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [form, setForm]           = useState(EMPTY)
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
   const [duplicates, setDuplicates] = useState(null)
 
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function PersonFormPage() {
     setError('')
     try {
       const payload = { ...form, force }
-      // clean empties
       Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
 
       let res
@@ -64,9 +63,11 @@ export default function PersonFormPage() {
     }
   }
 
-  const F = ({ name, label, type = 'text', rows }) => (
+  const F = ({ name, label, type = 'text', rows, required }) => (
     <div>
-      <label className="block text-xs font-medium text-stone-600 mb-1">{label}</label>
+      <label className="field-label block mb-1.5">
+        {label}{required && <span className="text-primary-500 ml-0.5">*</span>}
+      </label>
       {rows ? (
         <textarea className="input" rows={rows} value={form[name]} onChange={set(name)} />
       ) : (
@@ -76,7 +77,7 @@ export default function PersonFormPage() {
   )
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {duplicates && (
         <DuplicateWarning
           persons={duplicates}
@@ -85,58 +86,94 @@ export default function PersonFormPage() {
         />
       )}
 
-      <h1 className="text-xl font-bold text-stone-800 mb-6">
-        {isEdit ? t('person.edit') : t('person.add')}
-      </h1>
+      {/* Page header */}
+      <div className="mb-7">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary-600 mb-4 transition-colors"
+        >
+          ← Назад
+        </button>
+        <h1 className="font-serif text-2xl font-bold text-primary-800">
+          {isEdit ? t('person.edit') : t('person.add')}
+        </h1>
+        <p className="text-xs text-slate-400 mt-1">Все поля, кроме имени, необязательны</p>
+      </div>
 
-      <div className="card p-6 space-y-4">
+      <div className="card p-7 shadow-card-lg space-y-6">
+        {/* Identity section */}
         <div>
-          <label className="block text-xs font-medium text-stone-600 mb-1">{t('person.name')} *</label>
-          <input className="input" required value={form.full_name} onChange={set('full_name')} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <F name="birth_year" label={t('person.birthYear')} type="number" />
-          <F name="death_year" label={t('person.deathYear')} type="number" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-stone-600 mb-1">{t('person.region')}</label>
-            <select className="input" value={form.region} onChange={set('region')}>
-              <option value="">—</option>
-              {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">Основная информация</p>
+          <div className="space-y-4">
+            <F name="full_name" label={t('person.name')} required />
+            <div className="grid grid-cols-2 gap-4">
+              <F name="birth_year" label={t('person.birthYear')} type="number" />
+              <F name="death_year" label={t('person.deathYear')} type="number" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="field-label block mb-1.5">{t('person.region')}</label>
+                <select className="input" value={form.region} onChange={set('region')}>
+                  <option value="">— Выберите регион</option>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <F name="district" label={t('person.district')} />
+            </div>
+            <F name="occupation" label={t('person.occupation')} />
           </div>
-          <F name="district" label={t('person.district')} />
         </div>
 
-        <F name="occupation" label={t('person.occupation')} />
-        <F name="charge" label={t('person.charge')} />
-
-        <div className="grid grid-cols-2 gap-4">
-          <F name="arrest_date" label={t('person.arrestDate')} type="date" />
-          <F name="sentence_date" label={t('person.sentenceDate')} type="date" />
+        {/* Repression details */}
+        <div>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">Уголовное дело</p>
+          <div className="space-y-4">
+            <F name="charge" label={t('person.charge')} />
+            <div className="grid grid-cols-2 gap-4">
+              <F name="arrest_date"   label={t('person.arrestDate')}   type="date" />
+              <F name="sentence_date" label={t('person.sentenceDate')} type="date" />
+            </div>
+            <F name="sentence" label={t('person.sentence')} />
+            <F name="rehabilitation_date" label={t('person.rehabilitationDate')} type="date" />
+          </div>
         </div>
 
-        <F name="sentence" label={t('person.sentence')} />
-        <F name="rehabilitation_date" label={t('person.rehabilitationDate')} type="date" />
-        <F name="biography" label={t('person.biography')} rows={5} />
-        <F name="source" label={t('person.source')} />
+        {/* Biography & source */}
+        <div>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">Биография и источники</p>
+          <div className="space-y-4">
+            <F name="biography" label={t('person.biography')} rows={5} />
+            <F name="source" label={t('person.source')} />
+          </div>
+        </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
+            <span className="shrink-0">⚠</span>
+            <span>{error}</span>
+          </div>
+        )}
 
-        <div className="flex gap-3 pt-2">
-          <button type="button" onClick={() => navigate(-1)} className="btn-outline flex-1">
+        <div className="flex gap-3 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="btn-outline flex-1 justify-center"
+          >
             {t('person.cancel')}
           </button>
           <button
             type="button"
             onClick={() => submit(false)}
             disabled={loading || !form.full_name}
-            className="btn-primary flex-1"
+            className="btn-primary flex-1 justify-center"
           >
-            {loading ? t('common.loading') : t('person.save')}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                {t('common.loading')}
+              </span>
+            ) : t('person.save')}
           </button>
         </div>
       </div>
