@@ -19,15 +19,8 @@ export default function DocumentsPage() {
 
   const load = useCallback(async () => {
     try {
-      const load = useCallback(async () => {
-        try {
-          const { data } = await documentsApi.list()
-          // Backend returns { items: [...], total, page, limit }
-          setDocs(Array.isArray(data) ? data : (data.items ?? []))
-        } finally {
-          setLoading(false)
-        }
-      }, [])
+      const { data } = await documentsApi.list()
+      setDocs(Array.isArray(data) ? data : (data.items ?? []))
     } finally {
       setLoading(false)
     }
@@ -43,7 +36,6 @@ export default function DocumentsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-7">
-      {/* Header */}
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary-800">{t('documents.title')}</h1>
         <p className="text-sm text-slate-400 mt-1">
@@ -58,7 +50,6 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      {/* Document list */}
       <div>
         <p className="field-label mb-3">Загруженные документы</p>
         <div className="space-y-2">
