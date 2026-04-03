@@ -4,23 +4,30 @@ import { documentsApi } from '../api'
 import FileUploader from '../components/FileUploader'
 import { useAuth } from '../hooks/useAuth'
 
-const TYPE_ICON  = { pdf: '📕', md: '📝', txt: '📄' }
+const TYPE_ICON = { pdf: '📕', md: '📝', txt: '📄' }
 const TYPE_COLOR = {
   pdf: 'bg-red-50 text-red-700 ring-1 ring-red-200',
-  md:  'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+  md: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
   txt: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
 }
 
 export default function DocumentsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [docs, setDocs]       = useState([])
+  const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     try {
-      const { data } = await documentsApi.list()
-      setDocs(data)
+      const load = useCallback(async () => {
+        try {
+          const { data } = await documentsApi.list()
+          // Backend returns { items: [...], total, page, limit }
+          setDocs(Array.isArray(data) ? data : (data.items ?? []))
+        } finally {
+          setLoading(false)
+        }
+      }, [])
     } finally {
       setLoading(false)
     }
