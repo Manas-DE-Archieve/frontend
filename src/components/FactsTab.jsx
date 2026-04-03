@@ -2,17 +2,22 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { factsApi } from '../api'
 
+const STORAGE_KEY = 'archiv_seen_fact_ids'
+
+function loadSeenIds() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') } catch { return [] }
+}
+function saveSeenIds(ids) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ids)) } catch {}
+}
+
 function FactCard({ fact }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
 
   return (
-    <div className={`card overflow-hidden transition-shadow ${open ? 'shadow-md' : 'hover:shadow-sm'}`}>
-      {/* Clickable header */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full text-left px-5 pt-4 pb-3 flex items-start gap-3"
-      >
+    <div className={`card overflow-hidden transition-all ${open ? 'shadow-md' : 'hover:shadow-sm'}`}>
+      <button onClick={() => setOpen(v => !v)} className="w-full text-left px-5 pt-4 pb-3 flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl bg-indigo-50 ring-1 ring-indigo-100 flex items-center justify-center text-lg shrink-0">
           {fact.icon || '📖'}
         </div>
@@ -20,18 +25,14 @@ function FactCard({ fact }) {
           <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 block mb-1">
             {fact.category}
           </span>
-          <p className="font-serif font-semibold text-sm text-slate-800 leading-snug">
-            {fact.title}
-          </p>
+          <p className="font-serif font-semibold text-sm text-slate-800 leading-snug">{fact.title}</p>
         </div>
         <span className={`text-slate-300 text-[10px] shrink-0 mt-1 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
       </button>
 
-      {/* Expandable body + source */}
       {open && (
         <div className="px-5 pb-4 pt-1 border-t border-slate-100 space-y-3">
           <p className="text-xs text-slate-600 leading-relaxed">{fact.body}</p>
-
           {fact.source_filename && (
             <div className="flex items-center gap-2 pt-1">
               <span className="text-[10px] text-slate-400 uppercase tracking-wide">Источник:</span>
@@ -44,7 +45,7 @@ function FactCard({ fact }) {
                 }`}
               >
                 📄 {fact.source_filename}
-                {fact.document_id && <span className="text-indigo-400">↗</span>}
+                {fact.document_id && <span>↗</span>}
               </button>
             </div>
           )}
@@ -54,21 +55,37 @@ function FactCard({ fact }) {
   )
 }
 
-const PAGE_SIZE = 12
-
 export default function FactsTab() {
-  const [facts, setFacts]   = useState([])
-  const [total, setTotal]   = useState(0)
-  const [page, setPage]     = useState(1)
-  const [loading, setLoading] = useState(true)
+  const [facts, setFacts]       = useState([])
+  const [total, setTotal]       = useState(0)
+  const [remaining, setRemaining] = useState(null)
+  const [seenIds, setSeenIds]   = useState(() => loadSeenIds())
+  const [allRead, setAllRead]   = useState(false)
+  const [loading, setLoading]   = useState(true)
 
-  const load = async (p = 1) => {
+  const load = async (currentSeen) => {
     setLoading(true)
+    setAllRead(false)
     try {
-      const { data } = await factsApi.get({ page: p, limit: PAGE_SIZE })
-      setFacts(data.items || [])
-      setTotal(data.total)
-      setPage(p)
+      const { data } = await factsApi.get({
+        limit: 6,
+        seen_ids: currentSeen.join(','),
+      })
+
+      if (data.items.length === 0 && data.total > 0) {
+        // All facts have been seen
+        setAllRead(true)
+        setFacts([])
+      } else {
+        setFacts(data.items)
+        setTotal(data.total)
+        setRemaining(data.remaining)
+
+        // Mark these as seen
+        const newIds = [...new Set([...currentSeen, ...data.items.map(f => f.id)])]
+        setSeenIds(newIds)
+        saveSeenIds(newIds)
+      }
     } catch {
       setFacts([])
     } finally {
@@ -76,9 +93,17 @@ export default function FactsTab() {
     }
   }
 
-  useEffect(() => { load(1) }, [])
+  useEffect(() => { load(loadSeenIds()) }, [])
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const handleRefresh = () => load(seenIds)
+
+  const handleReset = () => {
+    const empty = []
+    setSeenIds(empty)
+    saveSeenIds(empty)
+    setAllRead(false)
+    load(empty)
+  }
 
   return (
     <div className="space-y-4">
@@ -87,10 +112,30 @@ export default function FactsTab() {
           <div className="w-4 h-px bg-primary-300/50" />
           <p className="font-serif font-semibold text-slate-800 text-sm">Знаете ли вы?</p>
           {!loading && total > 0 && (
-            <span className="text-xs text-slate-400">— {total} фактов из архива</span>
+            <span className="text-xs text-slate-400">
+              — прочитано {Math.min(seenIds.length, total)} из {total}
+            </span>
           )}
         </div>
+        {!loading && !allRead && (
+          <button
+            onClick={handleRefresh}
+            className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-colors font-medium"
+          >
+            Ещё факты →
+          </button>
+        )}
       </div>
+
+      {/* Progress bar */}
+      {total > 0 && !loading && (
+        <div className="w-full bg-slate-100 rounded-full h-1">
+          <div
+            className="bg-indigo-400 h-1 rounded-full transition-all duration-500"
+            style={{ width: `${Math.min(100, (seenIds.length / total) * 100)}%` }}
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -106,11 +151,20 @@ export default function FactsTab() {
             </div>
           ))}
         </div>
+      ) : allRead ? (
+        <div className="card p-12 text-center">
+          <p className="text-4xl mb-3">🎉</p>
+          <p className="font-serif text-lg text-slate-700 mb-1">Вы прочитали все факты!</p>
+          <p className="text-xs text-slate-400 mb-5">Все {total} исторических фактов из архива изучены</p>
+          <button onClick={handleReset} className="btn-outline !text-xs !py-2 !px-4">
+            Начать сначала
+          </button>
+        </div>
       ) : facts.length === 0 ? (
-        <div className="card p-14 text-center">
+        <div className="card p-12 text-center">
           <p className="text-3xl mb-3 opacity-40">📚</p>
           <p className="text-sm text-slate-500">Факты ещё не сгенерированы</p>
-          <p className="text-xs text-slate-400 mt-1">Загрузите документы, и факты появятся автоматически</p>
+          <p className="text-xs text-slate-400 mt-1">Загрузите документы — факты появятся автоматически</p>
         </div>
       ) : (
         <>
@@ -118,21 +172,17 @@ export default function FactsTab() {
             {facts.map(f => <FactCard key={f.id} fact={f} />)}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                disabled={page === 1}
-                onClick={() => load(page - 1)}
-                className="btn-outline !text-xs !py-1.5 !px-3 disabled:opacity-40"
-              >← Назад</button>
-              <span className="text-xs text-slate-400">{page} / {totalPages}</span>
-              <button
-                disabled={page === totalPages}
-                onClick={() => load(page + 1)}
-                className="btn-outline !text-xs !py-1.5 !px-3 disabled:opacity-40"
-              >Далее →</button>
-            </div>
-          )}
+          <div className="flex items-center justify-between pt-1">
+            {remaining !== null && remaining > 0 && (
+              <p className="text-xs text-slate-400">Ещё {remaining} непрочитанных</p>
+            )}
+            <button
+              onClick={handleRefresh}
+              className="btn-primary !text-xs !py-2 !px-4 ml-auto"
+            >
+              Следующие 6 →
+            </button>
+          </div>
         </>
       )}
     </div>
