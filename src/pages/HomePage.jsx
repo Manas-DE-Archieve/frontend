@@ -5,13 +5,19 @@ import { personsApi } from '../api'
 import PersonCard from '../components/PersonCard'
 import SearchBar from '../components/SearchBar'
 import MapVisualization from '../components/MapVisualization'
-import { useAuth } from '../hooks/useAuth'
+import Pagination from '../components/Pagination'
+import FactsTab from '../components/FactsTab'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
+
+const TABS = [
+  { id: 'people', label: '👤 Люди' },
+  { id: 'facts',  label: '📖 История' },
+]
 
 export default function HomePage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const [tab, setTab] = useState('people')
   const [persons, setPersons] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -33,134 +39,136 @@ export default function HomePage() {
     }
   }, [])
 
-  useEffect(() => { load(params, 1) }, [load])
+  useEffect(() => { load({}, 1) }, [load])
 
   const handleSearch = (p) => { setParams(p); load(p, 1) }
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-7">
-      {/* Hero header */}
+      {/* Hero */}
       <div className="relative rounded-2xl overflow-hidden bg-primary-800 px-8 py-10 shadow-card-lg">
-        {/* Subtle decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800 to-primary-700/90 pointer-events-none" />
         <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
-
-        <div className="relative flex items-end justify-between gap-6">
-          <div>
-            {/* Decorative top line */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-px bg-primary-300/60" />
-              <span className="text-primary-200 text-[10px] font-semibold tracking-[0.25em] uppercase">1918–1953</span>
-              <div className="w-6 h-px bg-primary-300/60" />
-            </div>
-
-            <h1 className="font-serif text-4xl font-bold text-white leading-tight mb-2">
-              {t('app.title')}
-            </h1>
-            <p className="text-slate-300 text-sm max-w-lg leading-relaxed">
-              {t('app.description')}
-            </p>
-
-            {total > 0 && (
-              <div className="mt-4 flex items-center gap-1.5 text-sm">
-                <span className="text-primary-300 font-semibold font-serif text-lg">{total.toLocaleString()}</span>
-                <span className="text-slate-400">{t('common.records')}</span>
-              </div>
-            )}
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-px bg-primary-300/60" />
+            <span className="text-primary-200 text-[10px] font-semibold tracking-[0.25em] uppercase">1918–1953</span>
+            <div className="w-6 h-px bg-primary-300/60" />
           </div>
-
-          {user && (
-            <Link to="/persons/new" className="shrink-0 btn-primary shadow-lg">
-              + {t('person.add')}
-            </Link>
+          <h1 className="font-serif text-4xl font-bold text-white leading-tight mb-2">{t('app.title')}</h1>
+          <p className="text-slate-300 text-sm max-w-lg leading-relaxed">{t('app.description')}</p>
+          {total > 0 && (
+            <div className="mt-4 flex items-center gap-1.5 text-sm">
+              <span className="text-primary-300 font-semibold font-serif text-lg">{total.toLocaleString()}</span>
+              <span className="text-slate-400">{t('common.records')}</span>
+            </div>
           )}
         </div>
       </div>
 
-      <SearchBar onSearch={handleSearch} />
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              tab === t.id
+                ? 'bg-white text-slate-800 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Results */}
-        <div className="lg:col-span-2 space-y-3">
-          {!loading && persons.length > 0 && (
-            <p className="text-xs text-slate-400 px-1">
-              {t('common.total')}: <strong className="text-slate-600">{total}</strong> {t('common.records')}
-              {page > 1 && <span className="text-slate-400"> · стр. {page} / {totalPages}</span>}
-            </p>
-          )}
-
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="card p-5">
-                  <div className="flex gap-4">
-                    <div className="w-0.5 h-12 skeleton" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 skeleton w-2/3 rounded" />
-                      <div className="h-3 skeleton w-1/3 rounded" />
+      {tab === 'people' && (
+        <>
+          <SearchBar onSearch={handleSearch} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: person list */}
+            <div className="lg:col-span-2 space-y-3">
+              {!loading && persons.length > 0 && (
+                <p className="text-xs text-slate-400 px-1">
+                  {t('common.total')}: <strong className="text-slate-600">{total}</strong> {t('common.records')}
+                </p>
+              )}
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="card p-5">
+                      <div className="flex gap-4">
+                        <div className="w-0.5 h-12 skeleton" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 skeleton w-2/3 rounded" />
+                          <div className="h-3 skeleton w-1/3 rounded" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              ) : persons.length === 0 ? (
+                <div className="card p-14 text-center">
+                  <p className="text-4xl mb-3 opacity-40">🕊</p>
+                  <p className="font-serif text-slate-500">{t('person.notFound')}</p>
+                  <p className="text-xs text-slate-400 mt-1">Попробуйте изменить параметры поиска</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {persons.map(p => <PersonCard key={p.id} person={p} />)}
+                </div>
+              )}
+              {totalPages > 1 && (
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={(p) => load(params, p)} />
+              )}
             </div>
-          ) : persons.length === 0 ? (
-            <div className="card p-14 text-center">
-              <p className="text-4xl mb-3 opacity-40">🕊</p>
-              <p className="font-serif text-slate-500">{t('person.notFound')}</p>
-              <p className="text-xs text-slate-400 mt-1">Попробуйте изменить параметры поиска</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {persons.map(p => <PersonCard key={p.id} person={p} />)}
-            </div>
-          )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 pt-3">
-              <button
-                className="btn-outline !py-1.5 !px-4 !text-xs"
-                disabled={page === 1}
-                onClick={() => load(params, page - 1)}
-              >
-                ← Назад
-              </button>
-              <span className="text-sm text-slate-500 font-medium">
-                {page} <span className="text-slate-300">/</span> {totalPages}
-              </span>
-              <button
-                className="btn-outline !py-1.5 !px-4 !text-xs"
-                disabled={page === totalPages}
-                onClick={() => load(params, page + 1)}
-              >
-                Вперёд →
-              </button>
+            {/* Right sidebar */}
+            <div className="space-y-4">
+              <MapVisualization />
+              <div className="card p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-px bg-primary-300/50" />
+                  <p className="font-serif font-semibold text-slate-800 text-sm">О проекте</p>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  «Архивдин Үнү» — цифровой мемориал жертв политических репрессий 1918–1953 гг. на территории современного Кыргызстана.
+                </p>
+                <div className="divider-navy" />
+                <Link to="/chat" className="btn-primary w-full justify-center !text-xs">
+                  Спросить ИИ-архивариуса
+                </Link>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        </>
+      )}
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          <MapVisualization persons={persons} />
-
-          {/* About card */}
-          <div className="card p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-px bg-primary-300/50" />
-              <p className="font-serif font-semibold text-slate-800 text-sm">О проекте</p>
+      {tab === 'facts' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <FactsTab />
+          </div>
+          <div className="space-y-4">
+            <MapVisualization />
+            <div className="card p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-px bg-primary-300/50" />
+                <p className="font-serif font-semibold text-slate-800 text-sm">О проекте</p>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                «Архивдин Үнү» — цифровой мемориал жертв политических репрессий 1918–1953 гг. на территории современного Кыргызстана.
+              </p>
+              <div className="divider-navy" />
+              <Link to="/chat" className="btn-primary w-full justify-center !text-xs">
+                Спросить ИИ-архивариуса
+              </Link>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              «Архивдин Үнү» — цифровой мемориал жертв политических репрессий 1918–1953 гг.
-              на территории современного Кыргызстана.
-            </p>
-            <div className="divider-navy" />
-            <Link to="/chat" className="btn-primary w-full justify-center !text-xs">
-              Спросить ИИ-архивариуса
-            </Link>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

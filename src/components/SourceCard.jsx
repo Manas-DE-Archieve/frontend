@@ -1,28 +1,53 @@
-import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function SourceCard({ source }) {
-  const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
+  const navigate = useNavigate()
   const pct = Math.round((source.score ?? 0) * 100)
   const isHigh = pct > 75
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3.5 text-xs animate-fade-in">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-1.5 min-w-0">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 text-xs animate-fade-in overflow-hidden">
+      {/* Header row — always visible */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="flex items-center gap-1.5 min-w-0 flex-1 text-left hover:text-slate-900 transition-colors"
+          title="Показать/скрыть фрагмент"
+        >
           <span className="text-slate-400 shrink-0">📄</span>
           <span className="font-semibold text-slate-700 truncate">{source.document_name}</span>
-        </div>
-        <div className={`shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-          isHigh
-            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-            : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-        }`}>
-          {pct}%
+          <span className="text-slate-300 shrink-0">{expanded ? '▲' : '▼'}</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className={`flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+            isHigh ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                   : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+          }`}>
+            {pct}%
+          </div>
+          {source.document_id && (
+            <button
+              onClick={() => navigate(`/documents?view=${source.document_id}`)}
+              className="text-indigo-400 hover:text-indigo-600 transition-colors text-[11px] font-medium px-1.5 py-0.5 rounded hover:bg-indigo-50"
+              title="Открыть документ"
+            >
+              ↗
+            </button>
+          )}
         </div>
       </div>
-      <p className="text-slate-500 line-clamp-3 leading-relaxed italic border-l-2 border-slate-200 pl-2.5">
-        {source.chunk_text}
-      </p>
+
+      {/* Expandable snippet */}
+      {expanded && (
+        <div className="px-3 pb-2.5 border-t border-slate-200 pt-2">
+          <p className="text-slate-500 leading-relaxed italic border-l-2 border-slate-200 pl-2.5 line-clamp-4">
+            {source.chunk_text}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

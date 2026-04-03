@@ -16,11 +16,10 @@ export default function Navbar({ onOpenLogin }) {
   const navLink = (to, label) => (
     <Link
       to={to}
-      className={`relative px-3 py-1.5 text-sm font-medium tracking-wide transition-colors duration-150 ${
-        pathname === to
+      className={`relative px-3 py-1.5 text-sm font-medium tracking-wide transition-colors duration-150 ${pathname === to
           ? 'text-primary-300'
           : 'text-slate-300 hover:text-white'
-      }`}
+        }`}
     >
       {label}
       {pathname === to && (
@@ -58,7 +57,7 @@ export default function Navbar({ onOpenLogin }) {
           {navLink('/', t('nav.home'))}
           {navLink('/chat', t('nav.chat'))}
           {navLink('/documents', t('nav.documents'))}
-          {user?.role !== 'user' && navLink('/admin', t('nav.admin'))}
+          {['moderator', 'super_admin'].includes(user?.role) && navLink('/admin', t('nav.admin'))}
         </div>
 
         {/* Lang switcher */}
@@ -67,11 +66,10 @@ export default function Navbar({ onOpenLogin }) {
             <button
               key={l.code}
               onClick={() => i18n.changeLanguage(l.code)}
-              className={`px-2 py-1 rounded text-[10px] font-semibold tracking-widest transition-colors duration-150 ${
-                i18n.language === l.code
+              className={`px-2 py-1 rounded text-[10px] font-semibold tracking-widest transition-colors duration-150 ${i18n.language === l.code
                   ? 'bg-primary-500 text-white'
                   : 'text-slate-500 hover:text-slate-300'
-              }`}
+                }`}
             >
               {l.label}
             </button>

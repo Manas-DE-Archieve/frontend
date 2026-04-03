@@ -5,7 +5,6 @@ import Navbar from './components/Navbar'
 import LoginModal from './components/LoginModal'
 import HomePage from './pages/HomePage'
 import PersonPage from './pages/PersonPage'
-import PersonFormPage from './pages/PersonFormPage'
 import ChatPage from './pages/ChatPage'
 import DocumentsPage from './pages/DocumentsPage'
 import AdminPage from './pages/AdminPage'
@@ -32,21 +31,11 @@ function AppRoutes() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/persons/new" element={
-            <ProtectedRoute onOpenLogin={() => setLoginOpen(true)}>
-              <PersonFormPage />
-            </ProtectedRoute>
-          } />
           <Route path="/persons/:id" element={<PersonPage />} />
-          <Route path="/persons/:id/edit" element={
-            <ProtectedRoute onOpenLogin={() => setLoginOpen(true)}>
-              <PersonFormPage />
-            </ProtectedRoute>
-          } />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/admin" element={
-            <ProtectedRoute roles={['moderator', 'admin']} onOpenLogin={() => setLoginOpen(true)}>
+            <ProtectedRoute roles={['moderator', 'super_admin']} onOpenLogin={() => setLoginOpen(true)}>
               <AdminPage />
             </ProtectedRoute>
           } />
