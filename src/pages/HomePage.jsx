@@ -5,6 +5,7 @@ import { personsApi } from '../api'
 import PersonCard from '../components/PersonCard'
 import SearchBar from '../components/SearchBar'
 import MapVisualization from '../components/MapVisualization'
+import Pagination from '../components/Pagination'
 import { useAuth } from '../hooks/useAuth'
 
 const PAGE_SIZE = 20
@@ -21,7 +22,9 @@ export default function HomePage() {
   const load = useCallback(async (searchParams, p = 1) => {
     setLoading(true)
     try {
-      const clean = Object.fromEntries(Object.entries(searchParams).filter(([, v]) => v !== '' && v != null))
+      const clean = Object.fromEntries(
+        Object.entries(searchParams).filter(([, v]) => v !== '' && v != null)
+      )
       const { data } = await personsApi.list({ ...clean, page: p, limit: PAGE_SIZE })
       setPersons(data.items)
       setTotal(data.total)
@@ -35,8 +38,10 @@ export default function HomePage() {
 
   useEffect(() => { load(params, 1) }, [load])
 
-  const handleSearch = (p) => { setParams(p); load(p, 1) }
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const handleSearch = (p) => {
+    setParams(p)
+    load(p, 1)
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
@@ -75,22 +80,13 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                className="btn-outline !py-1 !px-3 !text-xs"
-                disabled={page === 1}
-                onClick={() => load(params, page - 1)}
-              >◀</button>
-              <span className="text-sm text-stone-600">{page} / {totalPages}</span>
-              <button
-                className="btn-outline !py-1 !px-3 !text-xs"
-                disabled={page === totalPages}
-                onClick={() => load(params, page + 1)}
-              >▶</button>
-            </div>
-          )}
+          {/* Pagination Component */}
+          <Pagination
+            page={page}
+            total={total}
+            limit={PAGE_SIZE}
+            onPageChange={(p) => load(params, p)}
+          />
         </div>
 
         {/* Sidebar */}
