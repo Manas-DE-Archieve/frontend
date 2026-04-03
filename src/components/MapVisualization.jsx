@@ -1,7 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON } from 'react-leaflet'
 
-// Координаты центров областей
 const REGIONS_GEO = [
   { name: 'Чуйская область', lat: 42.87, lng: 74.59, count: 0 },
   { name: 'Иссык-Кульская область', lat: 42.45, lng: 77.40, count: 0 },
@@ -12,10 +12,31 @@ const REGIONS_GEO = [
   { name: 'Таласская область', lat: 42.52, lng: 72.24, count: 0 },
 ]
 
+const KG_BOUNDS = [
+  [39.0, 69.0],
+  [43.5, 80.5]
+]
+
 export default function MapVisualization({ persons = [] }) {
   const { t } = useTranslation()
+  const [kgBorder, setKgBorder] = useState(null)
+  const [regionsBorder, setRegionsBorder] = useState(null)
 
-  // Считаем количество людей по регионам
+  // Загружаем контуры границ при загрузке страницы
+  useEffect(() => {
+    // 1. Внешняя граница страны (из публичного API)
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries/KGZ.geo.json')
+      .then(res => res.json())
+      .then(data => setKgBorder(data))
+      .catch(err => console.error('Ошибка загрузки границ КР:', err))
+
+    // 2. Границы областей (из глобальной базы geoBoundaries - официальный и надежный источник)
+    fetch('https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/KGZ/ADM1/geoBoundaries-KGZ-ADM1_simplified.geojson')
+      .then(res => res.json())
+      .then(data => setRegionsBorder(data))
+      .catch(err => console.error('Ошибка загрузки границ областей:', err))
+  }, [])
+
   const counts = {}
   persons.forEach(p => { if (p.region) counts[p.region] = (counts[p.region] || 0) + 1 })
   const maxCount = Math.max(1, ...Object.values(counts))
@@ -26,41 +47,73 @@ export default function MapVisualization({ persons = [] }) {
     <div className="card p-4">
       <h3 className="text-sm font-semibold text-stone-700 mb-3">{t('map.title')}</h3>
 
-      {/* Настоящая интерактивная карта */}
-      <div className="w-full rounded-lg overflow-hidden border border-stone-200 z-0 relative">
+      <div className="w-full rounded-lg overflow-hidden border border-stone-200 z-0 relative shadow-inner">
         <MapContainer
-          center={[41.2, 74.5]} // Центр Кыргызстана
-          zoom={6}              // Приближение
-          style={{ height: '240px', width: '100%', zIndex: 1 }}
-          scrollWheelZoom={false} // Отключаем зум колесиком, чтобы страница не дергалась
+          center={[41.2, 74.5]}
+          zoom={5}         // Сделали стартовый зум чуть дальше, чтобы сразу видеть соседей
+          minZoom={3}      // Разрешили отдалять карту вплоть до материков
+          style={{ height: '260px', width: '100%', zIndex: 1 }}
+          scrollWheelZoom={true}
+          wheelPxPerZoomLevel={120}
+          zoomSnap={0.5}
+          zoomDelta={0.5}
         >
-          {/* Слой с картой (OpenStreetMap) */}
+          {/* Базовая карта */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* Рисуем круги для регионов */}
+          {/* СЛОЙ 1: Внутренние границы областей (пунктир) */}
+          {regionsBorder && (
+            <GeoJSON
+              data={regionsBorder}
+              style={{
+                color: '#57534e',   // Серый цвет
+                weight: 1.5,        // Тонкая линия
+                opacity: 0.8,
+                dashArray: '5, 5',  // Делаем линию пунктирной!
+                fillOpacity: 0      // Внутри области прозрачные
+              }}
+            />
+          )}
+
+          {/* СЛОЙ 2: Внешняя граница страны (жирная, поверх областей) */}
+          {kgBorder && (
+            <GeoJSON
+              data={kgBorder}
+              style={{
+                color: '#1c1917',   // Темно-серый/почти черный
+                weight: 3.5,        // Жирная линия
+                opacity: 0.9,
+                fillColor: '#000',
+                fillOpacity: 0.03   // Слегка затеняем всю страну
+              }}
+            />
+          )}
+
+          {/* СЛОЙ 3: Наши данные (красные круги) */}
           {regions.filter(r => r.count > 0).map(r => {
-            // Вычисляем размер круга в зависимости от количества людей
-            const radius = 10 + (r.count / maxCount) * 15
+            const radius = 10 + (r.count / maxCount) * 16
             return (
               <CircleMarker
                 key={r.name}
                 center={[r.lat, r.lng]}
                 pathOptions={{
-                  color: '#8b1a1a',      // Темно-красный цвет границы
-                  fillColor: '#8b1a1a',  // Темно-красный цвет заливки
-                  fillOpacity: 0.7,
+                  color: '#ffffff',      // Белая рамка
+                  fillColor: '#dc2626',  // Красный цвет
+                  fillOpacity: 0.85,
                   weight: 2
                 }}
                 radius={radius}
               >
-                {/* Всплывающая подсказка при наведении */}
-                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                  <span className="font-semibold">{r.name}</span>
-                  <br />
-                  {r.count} {t('map.persons')}
+                <Tooltip direction="top" offset={[0, -10]} opacity={0.95} className="!rounded-md !border-none !shadow-md !text-stone-800">
+                  <div className="text-center">
+                    <span className="font-bold block mb-0.5 text-sm">{r.name}</span>
+                    <span className="text-xs text-stone-500">
+                      Репрессировано: <strong className="text-red-700">{r.count}</strong>
+                    </span>
+                  </div>
                 </Tooltip>
               </CircleMarker>
             )
@@ -68,11 +121,10 @@ export default function MapVisualization({ persons = [] }) {
         </MapContainer>
       </div>
 
-      {/* Легенда (текст под картой) */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
         {regions.filter(r => r.count > 0).sort((a, b) => b.count - a.count).map(r => (
-          <span key={r.name} className="text-xs text-stone-500">
-            {r.name.replace(' область', '')}: <strong className="text-primary-500">{r.count}</strong>
+          <span key={r.name} className="text-xs text-stone-500 bg-stone-100 px-2 py-1 rounded-md">
+            {r.name.replace(' область', '')}: <strong className="text-red-700">{r.count}</strong>
           </span>
         ))}
       </div>
