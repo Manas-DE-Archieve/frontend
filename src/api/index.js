@@ -48,7 +48,7 @@ export const personsApi = {
 };
 
 export const factsApi = {
-  get: () => api.get('/facts'),
+  get: (params) => api.get('/facts', { params }),
 };
 
 export const documentsApi = {
