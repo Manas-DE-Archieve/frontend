@@ -8,7 +8,7 @@ import MapVisualization from '../components/MapVisualization'
 import Pagination from '../components/Pagination'
 import { useAuth } from '../hooks/useAuth'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 export default function HomePage() {
   const { t } = useTranslation()
