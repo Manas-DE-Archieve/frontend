@@ -120,7 +120,7 @@ export default function LoginModal({ onClose }) {
           onClick={onClose}
           className="mt-3 w-full text-center text-xs text-slate-400 hover:text-slate-200 transition-colors"
         >
-          Отмена
+          {t('person.cancel')}
         </button>
       </div>
     </div>

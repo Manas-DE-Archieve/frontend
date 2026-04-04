@@ -66,7 +66,7 @@ export default function SearchBar({ onSearch }) {
             <div>
               <label className="field-label mb-1.5 block">{t('search.region')}</label>
               <select className="input" value={region} onChange={e => setRegion(e.target.value)}>
-                <option value="">— Все регионы</option>
+                <option value="">{t('search.allRegions')}</option>
                 {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
@@ -74,7 +74,7 @@ export default function SearchBar({ onSearch }) {
               <label className="field-label mb-1.5 block">{t('search.charge')}</label>
               <input
                 className="input"
-                placeholder="Статья обвинения"
+                placeholder={t('search.chargePlaceholder')}
                 value={charge}
                 onChange={e => setCharge(e.target.value)}
               />

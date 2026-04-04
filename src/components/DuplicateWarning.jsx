@@ -18,12 +18,12 @@ export default function DuplicateWarning({ persons, documents, mode = 'person', 
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-8 h-8 rounded-full bg-amber-50 ring-1 ring-amber-200 flex items-center justify-center text-sm">⚠</div>
             <h2 className="font-serif text-xl font-semibold text-slate-800">
-              {mode === 'document' ? 'Найдены похожие документы' : t('duplicate.title')}
+              {mode === 'document' ? t('duplicate.docTitle') : t('duplicate.title')}
             </h2>
           </div>
           <p className="text-sm text-slate-500 leading-relaxed">
             {mode === 'document'
-              ? 'ИИ подтвердил совпадение содержимого. Нажмите на документ для просмотра или загрузите всё равно.'
+              ? t('duplicate.docSub')
               : t('duplicate.subtitle')}
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function DuplicateWarning({ persons, documents, mode = 'person', 
                   <div className="flex items-center gap-1.5">
                     <span className="text-base">📄</span>
                     <p className="font-medium text-sm text-slate-800 truncate">{item.filename}</p>
-                    <span className="text-[10px] text-indigo-400 shrink-0">↗ открыть</span>
+                    <span className="text-[10px] text-indigo-400 shrink-0">{t('duplicate.open')}</span>
                   </div>
                 ) : (
                   <>

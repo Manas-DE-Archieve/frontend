@@ -47,7 +47,7 @@ export default function PersonFormPage() {
       const { data } = await personsApi.extractFromDocument(file)
       setForm(prev => ({ ...prev, ...data, source: file.name }))
     } catch (err) {
-      setError('Ошибка распознавания документа')
+      setError(t('person.extractError'))
     } finally {
       setExtracting(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -111,12 +111,12 @@ export default function PersonFormPage() {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary-600 mb-4 transition-colors"
           >
-            ← Назад
+            ← {t('common.back')}
           </button>
           <h1 className="font-serif text-2xl font-bold text-primary-800">
             {isEdit ? t('person.edit') : t('person.add')}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">Все поля, кроме имени, необязательны</p>
+          <p className="text-xs text-slate-400 mt-1">{t('person.formSubtitle')}</p>
         </div>
 
         {/* AI Auto-extract Button (Only visible when creating new) */}
@@ -129,7 +129,7 @@ export default function PersonFormPage() {
               disabled={extracting}
               className="btn-outline !bg-indigo-50 !text-indigo-700 !border-indigo-200 hover:!bg-indigo-600 hover:!text-white transition-colors"
             >
-              {extracting ? '⏳ Читаю документ…' : '🪄 Заполнить из скана'}
+              {extracting ? t('person.extracting') : t('person.extractFromScan')}
             </button>
           </div>
         )}
@@ -138,7 +138,7 @@ export default function PersonFormPage() {
       <div className="card p-7 shadow-card-lg space-y-6">
         {/* Identity section */}
         <div>
-          <p className="field-label mb-4 pb-2 border-b border-slate-100">Основная информация</p>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">{t('person.sectionIdentity')}</p>
           <div className="space-y-4">
             <F name="full_name" label={t('person.name')} required />
             <div className="grid grid-cols-2 gap-4">
@@ -149,7 +149,7 @@ export default function PersonFormPage() {
               <div>
                 <label className="field-label block mb-1.5">{t('person.region')}</label>
                 <select className="input" value={form.region} onChange={set('region')}>
-                  <option value="">— Выберите регион</option>
+                  <option value="">{t('person.selectRegion')}</option>
                   {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
@@ -161,7 +161,7 @@ export default function PersonFormPage() {
 
         {/* Repression details */}
         <div>
-          <p className="field-label mb-4 pb-2 border-b border-slate-100">Уголовное дело</p>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">{t('person.sectionCase')}</p>
           <div className="space-y-4">
             <F name="charge" label={t('person.charge')} />
             <div className="grid grid-cols-2 gap-4">
@@ -175,7 +175,7 @@ export default function PersonFormPage() {
 
         {/* Biography & source */}
         <div>
-          <p className="field-label mb-4 pb-2 border-b border-slate-100">Биография и источники</p>
+          <p className="field-label mb-4 pb-2 border-b border-slate-100">{t('person.sectionBio')}</p>
           <div className="space-y-4">
             <F name="biography" label={t('person.biography')} rows={5} />
             <F name="source" label={t('person.source')} />

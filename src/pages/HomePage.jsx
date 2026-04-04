@@ -201,7 +201,7 @@ export default function HomePage() {
                 <p style={{ fontFamily: '"Playfair Display", serif', color: '#94a3b8', fontSize: 16, margin: '0 0 4px' }}>
                   {t('person.notFound')}
                 </p>
-                <p style={{ color: '#b8c8d8', fontSize: 12 }}>Попробуйте изменить параметры поиска</p>
+                <p style={{ color: '#b8c8d8', fontSize: 12 }}>{t('person.notFoundSubtext')}</p>
               </div>
             ) : (
               persons.map(p => <PersonCard key={p.id} person={p} />)

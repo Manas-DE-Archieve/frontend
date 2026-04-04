@@ -5,6 +5,7 @@ import SourceCard from '../components/SourceCard'
 import { useAuth } from '../hooks/useAuth'
 
 function SourcesToggle({ sources }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   if (!sources?.length) return null
   return (
@@ -14,7 +15,7 @@ function SourcesToggle({ sources }) {
         className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
       >
         <span className={`transition-transform duration-200 ${open ? 'rotate-90' : ''}`}>▶</span>
-        Источники ({sources.length})
+        {t('chat.sources')} ({sources.length})
       </button>
       {open && (
         <div className="mt-1.5 space-y-1.5">
@@ -140,7 +141,7 @@ export default function ChatPage() {
         }
       }
     } catch (e) {
-      setMessages(prev => { const n=[...prev]; n[n.length-1]={role:'assistant',content:`Ошибка: ${e.message}`,_streaming:false}; return n })
+      setMessages(prev => { const n=[...prev]; n[n.length-1]={role:'assistant',content:`${t('chat.error')}: ${e.message}`,_streaming:false}; return n })
     } finally {
       setStreaming(false)
       textareaRef.current?.focus()
@@ -155,8 +156,8 @@ export default function ChatPage() {
     const d = new Date(iso)
     const today = new Date()
     if (d.toDateString() === today.toDateString())
-      return d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })
-    return d.toLocaleDateString('ru', { day: 'numeric', month: 'short' })
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' })
   }
 
   const titledSessions = sessions.filter(s => s.title)
@@ -187,7 +188,7 @@ export default function ChatPage() {
             onClick={newSession}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-primary-700 hover:bg-primary-800 text-white text-sm font-medium transition-colors"
           >
-            ✏ Новый диалог
+            ✏ {t('chat.newSession')}
           </button>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -200,7 +201,7 @@ export default function ChatPage() {
         {/* Sessions list */}
         <div className="flex-1 overflow-y-auto py-2 px-2">
           {titledSessions.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center mt-8 px-3">История пуста</p>
+            <p className="text-xs text-slate-400 text-center mt-8 px-3">{t('chat.historyEmpty')}</p>
           ) : (
             titledSessions.map((s, i) => (
               <button
@@ -215,7 +216,7 @@ export default function ChatPage() {
                   <p className={`text-xs truncate font-medium leading-snug ${
                     s.id === sessionId ? 'text-primary-700' : 'text-slate-700'
                   }`}>
-                    {s.title || `Диалог ${titledSessions.length - i}`}
+                    {s.title || `${t('chat.sessionFallback')} ${titledSessions.length - i}`}
                   </p>
                   <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(s.created_at)}</p>
                 </div>
@@ -237,7 +238,7 @@ export default function ChatPage() {
                 ? 'bg-primary-100 text-primary-700'
                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
             }`}
-            title="История диалогов"
+            title={t('chat.historyTitle')}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
               <rect y="2" width="18" height="2" rx="1"/>
@@ -251,7 +252,7 @@ export default function ChatPage() {
               {t('chat.title')}
             </h1>
             <p className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
-              Ответы основаны на загруженных архивных документах
+              {t('chat.subtitle')}
             </p>
           </div>
         </div>
@@ -263,7 +264,7 @@ export default function ChatPage() {
               <div className="w-16 h-16 rounded-2xl bg-primary-800/10 flex items-center justify-center text-3xl mb-4">🗂</div>
               <p className="font-serif text-lg text-slate-500 mb-1">{t('chat.empty')}</p>
               <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                Задайте вопрос об архивных документах, репрессиях или конкретных людях
+                {t('chat.emptySubtext')}
               </p>
             </div>
           )}
@@ -315,7 +316,7 @@ export default function ChatPage() {
             </button>
           </div>
           <p className="text-[10px] text-slate-400 mt-1 max-w-3xl mx-auto">
-            Enter — отправить · Shift+Enter — новая строка
+            {t('chat.hint')}
           </p>
         </div>
       </div>

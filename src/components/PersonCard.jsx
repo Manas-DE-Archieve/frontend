@@ -109,7 +109,7 @@ export default function PersonCard({ person }) {
               marginTop: 6, fontSize: 12, color: '#7d95ab',
               overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
             }}>
-              <span style={{ fontWeight: 600, color: '#5a7590' }}>Статья: </span>
+              <span style={{ fontWeight: 600, color: '#5a7590' }}>{t('facts.chargeLabel')} </span>
               {person.charge}
             </p>
           )}

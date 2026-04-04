@@ -38,17 +38,17 @@ export default function PersonPage() {
       await personsApi.setStatus(id, newStatus)
       setPerson(prev => ({ ...prev, status: newStatus }))
     } catch (error) {
-      alert('Ошибка при смене статуса. Убедитесь, что у вас есть права модератора.')
+      alert(t('person.statusError'))
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Вы уверены, что хотите удалить эту запись навсегда?')) return
+    if (!confirm(t('person.deleteConfirm'))) return
     try {
       await personsApi.delete(id)
       navigate('/')
     } catch (error) {
-      alert('Ошибка при удалении.')
+      alert(t('person.deleteError'))
     }
   }
 
@@ -67,9 +67,9 @@ export default function PersonPage() {
 
   if (!person) return (
     <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-      <p className="font-serif text-xl text-slate-400 mb-2">Запись не найдена</p>
+      <p className="font-serif text-xl text-slate-400 mb-2">{t('person.notFoundRecord')}</p>
       <p className="text-sm text-slate-400 mb-6">{t('person.notFound')}</p>
-      <Link to="/" className="btn-primary inline-flex">← Назад в архив</Link>
+      <Link to="/" className="btn-primary inline-flex">{t('person.backToArchive')}</Link>
     </div>
   )
 
@@ -93,7 +93,7 @@ export default function PersonPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-4 h-px bg-primary-300/50" />
-                <span className="text-primary-200 text-[10px] tracking-[0.2em] uppercase font-medium">Личное дело</span>
+                <span className="text-primary-200 text-[10px] tracking-[0.2em] uppercase font-medium">{t('person.personalFile')}</span>
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
                 {person.full_name}
@@ -118,8 +118,8 @@ export default function PersonPage() {
                 🛡️
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Управление записью</p>
-                <p className="text-[10px] text-slate-500">Установите официальный статус</p>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">{t('person.recordControl')}</p>
+                <p className="text-[10px] text-slate-500">{t('person.setStatus')}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -128,20 +128,20 @@ export default function PersonPage() {
                 disabled={person.status === 'verified'}
                 className="btn-outline !py-1.5 !px-3 !text-xs !bg-emerald-50 !border-emerald-200 !text-emerald-700 hover:!bg-emerald-600 hover:!text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ✓ Верифицировать
+                ✓ {t('admin.verify')}
               </button>
               <button
                 onClick={() => handleSetStatus('rejected')}
                 disabled={person.status === 'rejected'}
                 className="btn-outline !py-1.5 !px-3 !text-xs !bg-amber-50 !border-amber-200 !text-amber-700 hover:!bg-amber-500 hover:!text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ✗ Отклонить
+                ✗ {t('admin.reject')}
               </button>
               <button
                 onClick={handleDelete}
                 className="btn-outline !py-1.5 !px-3 !text-xs !bg-red-50 !border-red-200 !text-red-700 hover:!bg-red-600 hover:!text-white"
               >
-                🗑 Удалить
+                🗑 {t('person.delete')}
               </button>
             </div>
           </div>

@@ -60,12 +60,12 @@ export default function MapVisualization() {
         <div className="text-right">
           {stats.total > 0 && (
             <span className="text-xs text-slate-400">
-              Всего: <strong className="text-primary-600">{stats.total}</strong>
+              {t('map.total')} <strong className="text-primary-600">{stats.total}</strong>
             </span>
           )}
           {stats.total > totalShown && (
             <span className="text-[10px] text-amber-500 block">
-              На карте: {totalShown} (регион не определён у {stats.total - totalShown})
+              {t('map.onMap', { shown: totalShown, noRegion: stats.total - totalShown })}
             </span>
           )}
         </div>
@@ -111,7 +111,7 @@ export default function MapVisualization() {
                   <div className="text-center">
                     <span className="font-bold block mb-0.5 text-sm">{r.name}</span>
                     <span className="text-xs text-slate-500">
-                      Репрессировано: <strong className="text-primary-700">{r.count}</strong>
+                      {t('map.repressed')} <strong className="text-primary-700">{r.count}</strong>
                     </span>
                   </div>
                 </Tooltip>

@@ -78,7 +78,7 @@ export default function FileUploader({ onUploaded }) {
           {isDragActive ? '📂' : '📄'}
         </div>
         <p className="font-medium text-slate-600">
-          {uploading ? t('documents.uploading') : isDragActive ? 'Отпустите файлы...' : t('documents.drop')}
+          {uploading ? t('documents.uploading') : isDragActive ? t('documents.release') : t('documents.drop')}
         </p>
         <p className="text-xs text-slate-400 mt-1.5">{t('documents.types')}</p>
         {uploading && (

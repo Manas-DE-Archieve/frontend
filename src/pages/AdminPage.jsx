@@ -40,7 +40,7 @@ function UserManagementPanel() {
       await adminApi.updateUserRole(userId, newRole);
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     } catch (error) {
-      alert('Не удалось изменить роль.');
+      alert(t('admin.roleChangeFailed'));
       console.error(error);
     }
   };
@@ -57,12 +57,12 @@ function UserManagementPanel() {
 
   return (
     <div className="card p-6 mt-8">
-      <h2 className="font-serif text-xl font-bold text-primary-800 mb-1">Управление пользователями</h2>
-      <p className="text-sm text-slate-400 mb-4">Назначение ролей модераторов.</p>
+      <h2 className="font-serif text-xl font-bold text-primary-800 mb-1">{t('admin.userManagement')}</h2>
+      <p className="text-sm text-slate-400 mb-4">{t('admin.userManagementSubtitle')}</p>
 
       <input
         type="text"
-        placeholder="Поиск по email..."
+        placeholder={t('admin.searchEmail')}
         onChange={handleSearchChange}
         className="input mb-4"
       />
@@ -71,9 +71,9 @@ function UserManagementPanel() {
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-slate-500 uppercase bg-slate-50">
             <tr>
-              <th scope="col" className="px-6 py-3">Пользователь</th>
-              <th scope="col" className="px-6 py-3">Роль</th>
-              <th scope="col" className="px-6 py-3">Дата регистрации</th>
+              <th scope="col" className="px-6 py-3">{t('admin.colUser')}</th>
+              <th scope="col" className="px-6 py-3">{t('admin.colRole')}</th>
+              <th scope="col" className="px-6 py-3">{t('admin.colCreatedAt')}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,13 +87,13 @@ function UserManagementPanel() {
                     disabled={user.id === currentUser.id || user.role === 'super_admin'}
                     className="input !py-1 !px-2 text-xs disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <option value="user">Пользователь</option>
-                    <option value="moderator">Модератор</option>
+                    <option value="user">{t('admin.roleUser')}</option>
+                    <option value="moderator">{t('admin.roleModerator')}</option>
                     {user.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
                   </select>
                 </td>
                 <td className="px-6 py-4 text-slate-500">
-                  {new Date(user.created_at).toLocaleDateString('ru-RU')}
+                  {new Date(user.created_at).toLocaleDateString()}
                 </td>
               </tr>
             ))}
@@ -145,7 +145,7 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="text-4xl mb-3 opacity-30">🔒</div>
-        <p className="font-serif text-lg text-slate-400">Доступ запрещён</p>
+        <p className="font-serif text-lg text-slate-400">{t('admin.accessDenied')}</p>
       </div>
     );
   }
@@ -163,7 +163,7 @@ export default function AdminPage() {
           {total > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-xs font-semibold text-amber-700">{total} ожидают проверки</span>
+              <span className="text-xs font-semibold text-amber-700">{t('admin.awaitingCount', { count: total })}</span>
             </div>
           )}
         </div>
@@ -180,8 +180,8 @@ export default function AdminPage() {
         ) : persons.length === 0 ? (
           <div className="card p-16 text-center mt-6">
             <p className="text-4xl mb-3 opacity-50">✓</p>
-            <p className="font-serif text-slate-500">Все записи проверены</p>
-            <p className="text-xs text-slate-400 mt-1">Нет записей, ожидающих проверки</p>
+            <p className="font-serif text-slate-500">{t('admin.allChecked')}</p>
+            <p className="text-xs text-slate-400 mt-1">{t('admin.noPending')}</p>
           </div>
         ) : (
           <div className="space-y-3 mt-6">
@@ -199,7 +199,7 @@ export default function AdminPage() {
                     {[p.birth_year, p.region, p.charge].filter(Boolean).join(' · ')}
                   </p>
                   <p className="text-[10px] text-slate-300 mt-0.5">
-                    Добавлено: {new Date(p.created_at).toLocaleDateString('ru-RU')}
+                    {t('admin.addedOn')} {new Date(p.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">

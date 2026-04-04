@@ -9,11 +9,11 @@ import DocumentViewerModal from '../components/DocumentViewerModal';
 
 const PAGE_SIZE = 10;
 const TYPE_ICON = { pdf: '📕', md: '📝', txt: '📄' };
-const STATUS_STYLES = {
-  pending: { label: 'Ожидает', class: 'badge-pending' },
-  processing: { label: 'В обработке', class: 'badge-pending animate-pulse' },
-  processed: { label: 'Обработан', class: 'badge-verified' },
-  failed_extraction: { label: 'Ошибка ИИ', class: 'badge-rejected' },
+const STATUS_CLASS = {
+  pending: 'badge-pending',
+  processing: 'badge-pending animate-pulse',
+  processed: 'badge-verified',
+  failed_extraction: 'badge-rejected',
 };
 
 export default function DocumentsPage() {
@@ -85,9 +85,9 @@ export default function DocumentsPage() {
     setGenMsg('');
     try {
       await factsApi.generate();
-      setGenMsg('✓ Генерация запущена');
+      setGenMsg(t('documents.genStarted'));
     } catch {
-      setGenMsg('Ошибка запуска');
+      setGenMsg(t('documents.genError'));
     } finally {
       setGenerating(false);
     }
@@ -103,14 +103,14 @@ export default function DocumentsPage() {
           <div>
             <h1 className="font-serif text-2xl font-bold text-primary-800">{t('documents.title')}</h1>
             <p className="text-sm text-slate-400 mt-1">
-              Загружайте документы, и система автоматически создаст карточки.
+              {t('documents.subtitle')}
             </p>
           </div>
           {user && ['moderator', 'super_admin'].includes(user.role) && (
             <div className="shrink-0 text-right">
               <button onClick={handleGenerateFacts} disabled={generating} className="btn-outline !text-xs !py-2 !px-3 flex items-center gap-1.5">
                 {generating ? <span className="w-3 h-3 border border-slate-400 border-t-transparent rounded-full animate-spin" /> : '✨'}
-                Сгенерировать факты
+                {t('documents.generateFacts')}
               </button>
               {genMsg && <p className="text-[11px] mt-1 text-slate-500">{genMsg}</p>}
             </div>
@@ -119,15 +119,15 @@ export default function DocumentsPage() {
 
         {user && (
           <div className="card p-5">
-            <p className="field-label mb-3">Загрузить документ</p>
+            <p className="field-label mb-3">{t('documents.uploadSection')}</p>
             <FileUploader onUploaded={handleUploaded} />
           </div>
         )}
 
         <div>
           <div className="flex border-b border-slate-200 mb-4">
-            <button onClick={() => setScope('all')} className={`px-4 py-2 text-sm font-medium ${scope === 'all' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-slate-500'}`}>Все документы</button>
-            {user && <button onClick={() => setScope('my')} className={`px-4 py-2 text-sm font-medium ${scope === 'my' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-slate-500'}`}>Мои документы</button>}
+            <button onClick={() => setScope('all')} className={`px-4 py-2 text-sm font-medium ${scope === 'all' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-slate-500'}`}>{t('documents.allDocs')}</button>
+            {user && <button onClick={() => setScope('my')} className={`px-4 py-2 text-sm font-medium ${scope === 'my' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-slate-500'}`}>{t('documents.myDocs')}</button>}
           </div>
 
           <div className="space-y-2">
@@ -140,15 +140,16 @@ export default function DocumentsPage() {
               </div>
             ) : (
               docs.map(doc => {
-                const statusInfo = STATUS_STYLES[doc.status] || { label: doc.status, class: 'badge' };
+                const statusKey = { pending: 'status.pending', processing: 'status.processing', processed: 'status.processed', failed_extraction: 'status.failedExtraction' }[doc.status];
+                const statusClass = STATUS_CLASS[doc.status] || 'badge';
                 return (
                   <div key={doc.id} onClick={() => handleViewDoc(doc.id)} className="card-hover p-4 flex items-center gap-4 cursor-pointer">
                     <div className="text-2xl shrink-0">{TYPE_ICON[doc.file_type] || '📄'}</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-slate-800 truncate">{doc.filename}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{new Date(doc.uploaded_at).toLocaleDateString('ru-RU')}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
                     </div>
-                    <span className={`${statusInfo.class} shrink-0`}>{statusInfo.label}</span>
+                    <span className={`${statusClass} shrink-0`}>{statusKey ? t(statusKey) : doc.status}</span>
                     {user && (user.role !== 'user' || user.id === doc.uploaded_by) && (
                       <button onClick={(e) => handleDelete(e, doc.id)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50">✕</button>
                     )}
