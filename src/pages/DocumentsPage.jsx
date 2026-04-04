@@ -50,12 +50,12 @@ export default function DocumentsPage({ onOpenLogin }) {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  const load = useCallback(async (p = 1, currentScope = 'all') => {
+  const load = useCallback(async (p = 1, currentScope = 'all', currentSearch = '') => {
     setLoading(true);
     try {
       const params = { page: p, limit: PAGE_SIZE };
       if (currentScope === 'my') params.scope = 'my';
-      if (search.trim()) params.q = search.trim();
+      if (currentSearch.trim()) params.q = currentSearch.trim();
       const { data } = await documentsApi.list(params);
       setDocs(data.items ?? []);
       setTotal(data.total ?? 0);
@@ -68,7 +68,7 @@ export default function DocumentsPage({ onOpenLogin }) {
   }, []);
 
   useEffect(() => {
-    load(1, scope);
+    load(1, scope, search);
   }, [load, scope, search]);
 
   const handleDelete = async (e, id) => {
@@ -98,8 +98,8 @@ export default function DocumentsPage({ onOpenLogin }) {
   }, [searchParams, setSearchParams]);
 
   const handleUploaded = () => {
-    if (scope === 'my') load(1, 'my');
-    else setScope('my');
+    if (scope === 'my') load(1, 'my', search);
+    else { setScope('my'); }
   };
 
   const handleGenerateFacts = async () => {
@@ -173,13 +173,13 @@ export default function DocumentsPage({ onOpenLogin }) {
             type="text"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') setSearch(searchInput) }}
+            onKeyDown={e => { if (e.key === 'Enter') { setSearch(searchInput); load(1, scope, searchInput); } }}
             placeholder="Поиск по названию или содержимому..."
             className="input pl-9 pr-10 w-full"
           />
           {searchInput && (
             <button
-              onClick={() => { setSearchInput(''); setSearch(''); }}
+              onClick={() => { setSearchInput(''); setSearch(''); load(1, scope, ''); }}
               className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
             >✕</button>
           )}
@@ -259,7 +259,7 @@ export default function DocumentsPage({ onOpenLogin }) {
             <Pagination
               currentPage={page}
               totalPages={totalPages}
-              onPageChange={(p) => load(p, scope)}
+              onPageChange={(p) => load(p, scope, search)}
             />
           )}
         </div>
