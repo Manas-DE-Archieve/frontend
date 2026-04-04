@@ -186,7 +186,7 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-3 mt-6">
             {persons.map(p => (
-              <div key={p.id} className="card p-5 flex items-center gap-5 animate-fade-in">
+              <div key={p.id} className="card p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 animate-fade-in">
                 <div className="w-0.5 h-12 bg-amber-300 rounded-full shrink-0" />
                 <div className="flex-1 min-w-0">
                   <Link
@@ -202,7 +202,7 @@ export default function AdminPage() {
                     Добавлено: {new Date(p.created_at).toLocaleDateString('ru-RU')}
                   </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex gap-2 flex-wrap sm:shrink-0">
                   <button
                     onClick={() => setStatus(p.id, 'verified')}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm"

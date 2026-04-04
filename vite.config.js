@@ -7,10 +7,16 @@ export default defineConfig({
     host: '0.0.0.0', // Обязательно для Docker
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'http://backend:8000', // Имя сервиса из docker-compose
-        changeOrigin: true
-      }
-    }
+  '/api': {
+    target: 'http://backend:8000',
+    changeOrigin: true
+  },
+  '/voice': {
+  target: 'http://voice-actor:8001',
+  changeOrigin: true,
+  rewrite: (path) => path.replace(/^\/voice/, '')  // ← убирает /voice prefix
+}
+}
+    
   }
 })

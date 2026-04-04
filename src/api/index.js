@@ -88,3 +88,34 @@ export const setupApi = {
 };
 
 export default api;
+// ── Voice API ──────────────────────────────────────────────────────────────────
+const VOICE_BASE = '/voice';
+
+export const voiceApi = {
+  transcribe: async (audioBlob) => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'recording.webm');
+    const res = await fetch(`${VOICE_BASE}/transcribe-voice`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error(`ASR error: ${res.status}`);
+    const json = await res.json();
+    if (json.status !== 'success') throw new Error('ASR failed');
+    const data = json.data;
+    if (typeof data === 'string') return data;
+    if (data?.text) return data.text;
+    return JSON.stringify(data);
+  },
+
+  synthesize: async (text) => {
+    const res = await fetch(`${VOICE_BASE}/generate-voice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error(`TTS error: ${res.status}`);
+    const blob = await res.blob();
+    return URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
+  },
+};

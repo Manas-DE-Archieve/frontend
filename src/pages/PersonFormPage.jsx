@@ -141,11 +141,11 @@ export default function PersonFormPage() {
           <p className="field-label mb-4 pb-2 border-b border-slate-100">Основная информация</p>
           <div className="space-y-4">
             <F name="full_name" label={t('person.name')} required />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <F name="birth_year" label={t('person.birthYear')} type="number" />
               <F name="death_year" label={t('person.deathYear')} type="number" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="field-label block mb-1.5">{t('person.region')}</label>
                 <select className="input" value={form.region} onChange={set('region')}>
@@ -164,7 +164,7 @@ export default function PersonFormPage() {
           <p className="field-label mb-4 pb-2 border-b border-slate-100">Уголовное дело</p>
           <div className="space-y-4">
             <F name="charge" label={t('person.charge')} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <F name="arrest_date"   label={t('person.arrestDate')}   type="date" />
               <F name="sentence_date" label={t('person.sentenceDate')} type="date" />
             </div>

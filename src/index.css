@@ -421,3 +421,192 @@
 @media (max-width: 480px) {
   .card-hover { padding: 12px !important; }
 }
+/* ═══════════════════════════════════════════════════════
+   COMPREHENSIVE MOBILE ADAPTATION
+   Breakpoints: sm=640px  md=768px  lg=1024px
+═══════════════════════════════════════════════════════ */
+
+/* ── Global resets ── */
+* { box-sizing: border-box; }
+img, svg { max-width: 100%; }
+
+/* ── Base page padding ── */
+@media (max-width: 768px) {
+  .max-w-6xl, .max-w-3xl, .max-w-2xl {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* ═══════════ HOMEPAGE ═══════════ */
+@media (max-width: 768px) {
+  /* Hero */
+  [style*="borderRadius: 20"] {
+    border-radius: 16px !important;
+    margin-bottom: 14px !important;
+  }
+
+  /* Stats grid 2×2 */
+  [style*="gridTemplateColumns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  /* Content grid → single column */
+  [style*="gridTemplateColumns: 1fr 320px"],
+  [style*="gridTemplateColumns: 1fr clamp"],
+  [style*="grid-template-columns: 1fr 340px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tabs full width */
+  [style*="display: inline-flex"][style*="background: #eef2f7"] {
+    width: 100% !important;
+    display: flex !important;
+  }
+}
+
+/* ═══════════ SEARCHBAR ═══════════ */
+@media (max-width: 640px) {
+  /* Filters grid → 1 col */
+  .grid.grid-cols-3 { grid-template-columns: 1fr !important; }
+  .sm\:grid-cols-3  { grid-template-columns: 1fr !important; }
+}
+
+/* ═══════════ CHAT PAGE ═══════════ */
+@media (max-width: 768px) {
+  /* Chat layout: sidebar collapses */
+  .chat-layout {
+    flex-direction: column !important;
+  }
+  /* Session history hidden by default on mobile */
+  .chat-sidebar {
+    display: none !important;
+  }
+  .chat-sidebar.open {
+    display: flex !important;
+    position: fixed;
+    inset: 56px 0 0 0;
+    z-index: 30;
+    background: #fff;
+    overflow-y: auto;
+  }
+  /* Message input full width */
+  .chat-input-row {
+    padding: 8px !important;
+  }
+}
+
+/* ═══════════ DOCUMENTS PAGE ═══════════ */
+@media (max-width: 640px) {
+  /* Document card layout */
+  .card-hover .flex.items-center.gap-4 {
+    gap: 10px !important;
+  }
+  /* Dropzone smaller */
+  [class*="border-2"][class*="border-dashed"] {
+    padding: 28px 16px !important;
+  }
+}
+
+/* ═══════════ PERSON CARD ═══════════ */
+@media (max-width: 480px) {
+  .card-hover { padding: 14px 12px !important; }
+  /* Hide occupation on tiny screens */
+  .person-occupation { display: none; }
+}
+
+/* ═══════════ PERSON MODAL ═══════════ */
+@media (max-width: 640px) {
+  /* Modal full screen on mobile */
+  [style*="maxWidth: 600"] {
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    margin-top: auto !important;
+    align-self: flex-end !important;
+  }
+  /* Modal grid 1 col */
+  [style*="gridTemplateColumns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Modal overlay aligns bottom */
+  [style*="backdropFilter: blur"][style*="alignItems: center"] {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+}
+
+/* ═══════════ PERSON FORM ═══════════ */
+@media (max-width: 640px) {
+  .grid.grid-cols-2, .sm\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════ ADMIN PAGE ═══════════ */
+@media (max-width: 768px) {
+  /* Admin tabs full width */
+  .admin-tabs {
+    flex-wrap: wrap;
+  }
+  /* User table scroll */
+  .admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ═══════════ MAP ═══════════ */
+@media (max-width: 768px) {
+  /* Map smaller height */
+  [style*="height: 280"],
+  [style*="height: 300"] {
+    height: 200px !important;
+  }
+}
+
+/* ═══════════ PAGINATION ═══════════ */
+@media (max-width: 480px) {
+  /* Smaller pagination buttons */
+  .pagination { gap: 3px !important; }
+  .pagination button { min-width: 30px !important; height: 30px !important; font-size: 12px !important; }
+}
+
+/* ═══════════ FACTS TAB ═══════════ */
+@media (max-width: 640px) {
+  /* Facts grid 1 col */
+  [style*="gridTemplateColumns"][style*="repeat(2"] {
+    grid-template-columns: 1fr !important;
+  }
+  [style*="gridTemplateColumns"][style*="repeat(3"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════ DUPLICATE WARNING ═══════════ */
+@media (max-width: 480px) {
+  [style*="display: flex"][style*="gap: 12"] {
+    flex-direction: column;
+    gap: 8px !important;
+  }
+}
+
+/* ═══════════ CARDS / GENERAL ═══════════ */
+@media (max-width: 480px) {
+  .card { border-radius: 14px !important; }
+  .card-hover { border-radius: 14px !important; }
+  h1 { font-size: clamp(20px, 6vw, 28px) !important; }
+}
+
+/* ═══════════ SCROLLBAR (mobile) ═══════════ */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-thumb { background: #c5d5e5; border-radius: 3px; }
+}
+
+/* ═══════════ TOUCH TARGETS ═══════════ */
+@media (max-width: 768px) {
+  button, a[href] { min-height: 36px; }
+  input, select, textarea { font-size: 16px !important; } /* Prevents iOS zoom */
+}
