@@ -13,17 +13,31 @@ export default function FileUploader({ onUploaded, disabled, onDisabledClick }) 
 
   const busy = phase !== null
 
-  const performUpload = useCallback(async (files) => {
+  const performUpload = useCallback(async (files, force = false) => {
     setPhase('uploading')
     setError('')
-    const results = await Promise.allSettled(files.map(f => documentsApi.upload(f)))
-    const failed = results.filter(r => r.status === 'rejected')
+    const results = await Promise.allSettled(files.map(f => documentsApi.upload(f, force)))
+
+    const hardFailed = results.filter(r =>
+      r.status === 'rejected' && r.reason?.response?.status !== 409
+    )
+    const alreadyExists = results.filter(r =>
+      r.status === 'rejected' && r.reason?.response?.status === 409
+    )
     const succeeded = results.filter(r => r.status === 'fulfilled')
-    if (failed.length > 0) {
-      const msg = failed
+
+    if (hardFailed.length > 0) {
+      const msg = hardFailed
         .map(f => f.reason?.response?.data?.detail || f.reason?.message || 'Ошибка загрузки')
         .join('\n')
       setError(msg)
+    }
+    if (alreadyExists.length > 0) {
+      setError(
+        alreadyExists
+          .map(f => f.reason?.response?.data?.detail || 'Документ уже существует в архиве.')
+          .join('\n')
+      )
     }
     if (succeeded.length > 0) onUploaded?.()
     setDroppedFiles([])
@@ -57,7 +71,7 @@ export default function FileUploader({ onUploaded, disabled, onDisabledClick }) 
   const handleConfirm = useCallback(async () => {
     const files = duplicateState?.files || []
     setDuplicateState(null)
-    await performUpload(files)
+    await performUpload(files, true)  // force=true — user confirmed
   }, [duplicateState, performUpload])
 
   const handleCancel = useCallback(() => {
@@ -121,8 +135,12 @@ export default function FileUploader({ onUploaded, disabled, onDisabledClick }) 
       </div>
 
       {error && (
-        <div className="mt-2.5 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 whitespace-pre-wrap">
-          {error}
+        <div className={`mt-2.5 text-sm rounded-lg p-3 whitespace-pre-wrap border ${
+          error.includes('уже существует')
+            ? 'text-amber-700 bg-amber-50 border-amber-200'
+            : 'text-red-600 bg-red-50 border-red-100'
+        }`}>
+          {error.includes('уже существует') ? '⚠️ ' : '❌ '}{error}
         </div>
       )}
 

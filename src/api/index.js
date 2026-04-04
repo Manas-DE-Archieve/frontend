@@ -55,12 +55,12 @@ export const documentsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  upload: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/documents/upload', formData, {
+  upload: (file, force = false) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post(`/documents/upload?force=${force}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    })
   },
   list: (params) => api.get('/documents', { params }),
   get: (id) => api.get(`/documents/${id}`),

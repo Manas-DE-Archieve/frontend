@@ -47,12 +47,15 @@ export default function DocumentsPage({ onOpenLogin }) {
   const [scope, setScope] = useState('all');
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   const load = useCallback(async (p = 1, currentScope = 'all') => {
     setLoading(true);
     try {
       const params = { page: p, limit: PAGE_SIZE };
       if (currentScope === 'my') params.scope = 'my';
+      if (search.trim()) params.q = search.trim();
       const { data } = await documentsApi.list(params);
       setDocs(data.items ?? []);
       setTotal(data.total ?? 0);
@@ -66,7 +69,7 @@ export default function DocumentsPage({ onOpenLogin }) {
 
   useEffect(() => {
     load(1, scope);
-  }, [load, scope]);
+  }, [load, scope, search]);
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
@@ -160,6 +163,32 @@ export default function DocumentsPage({ onOpenLogin }) {
             />
           </div>
         </div>
+
+        {/* Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') setSearch(searchInput) }}
+            placeholder="Поиск по названию или содержимому..."
+            className="input pl-9 pr-10 w-full"
+          />
+          {searchInput && (
+            <button
+              onClick={() => { setSearchInput(''); setSearch(''); }}
+              className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
+            >✕</button>
+          )}
+        </div>
+        {search && (
+          <p className="text-xs text-slate-400 -mt-2">
+            Результаты по запросу: <span className="font-medium text-slate-600">«{search}»</span>
+          </p>
+        )}
 
         {/* Document list */}
         <div>
