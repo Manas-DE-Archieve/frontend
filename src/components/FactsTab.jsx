@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { factsApi } from '../api'
+import { factsApi, documentsApi } from '../api'
+import DocumentViewerModal from './DocumentViewerModal'
 
 const STORAGE_KEY = 'archiv_seen_fact_ids'
 
@@ -13,9 +14,8 @@ function saveSeenIds(ids) {
 }
 
 function FactCard({ fact }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation()  ← you added translation here
   const [open, setOpen] = useState(false)
-  const navigate = useNavigate()
 
   return (
     <div className={`card overflow-hidden transition-all ${open ? 'shadow-md' : 'hover:shadow-sm'}`}>
@@ -39,7 +39,11 @@ function FactCard({ fact }) {
             <div className="flex items-center gap-2 pt-1">
               <span className="text-[10px] text-slate-400 uppercase tracking-wide">{t('facts.source')}</span>
               <button
-                onClick={() => fact.document_id && navigate(`/documents?view=${fact.document_id}`)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (fact.document_id) onOpenDoc(fact.document_id); // Открываем модалку вместо navigate
+                }}
                 className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md transition-colors ${
                   fact.document_id
                     ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer'
@@ -66,6 +70,9 @@ export default function FactsTab() {
   const [allRead, setAllRead]   = useState(false)
   const [loading, setLoading]   = useState(true)
 
+  // Состояние для модалки документа
+  const [viewingDoc, setViewingDoc] = useState(null)
+
   const load = async (currentSeen) => {
     setLoading(true)
     setAllRead(false)
@@ -76,15 +83,12 @@ export default function FactsTab() {
       })
 
       if (data.items.length === 0 && data.total > 0) {
-        // All facts have been seen
         setAllRead(true)
         setFacts([])
       } else {
         setFacts(data.items)
         setTotal(data.total)
         setRemaining(data.remaining)
-
-        // Mark these as seen
         const newIds = [...new Set([...currentSeen, ...data.items.map(f => f.id)])]
         setSeenIds(newIds)
         saveSeenIds(newIds)
@@ -98,6 +102,17 @@ export default function FactsTab() {
 
   useEffect(() => { load(loadSeenIds()) }, [])
 
+  // Функция для загрузки данных документа для модалки
+  const handleOpenDocModal = async (id) => {
+    setViewingDoc({ id, filename: 'Загрузка...', raw_text: 'Загрузка...' });
+    try {
+      const { data } = await documentsApi.get(id);
+      setViewingDoc(data);
+    } catch {
+      setViewingDoc(null);
+    }
+  }
+
   const handleRefresh = () => load(seenIds)
 
   const handleReset = () => {
@@ -110,6 +125,14 @@ export default function FactsTab() {
 
   return (
     <div className="space-y-4">
+      {/* МОДАЛЬНОЕ ОКНО ПРОСМОТРА ДОКУМЕНТА */}
+      {viewingDoc && (
+        <DocumentViewerModal 
+          doc={viewingDoc} 
+          onClose={() => setViewingDoc(null)} 
+        />
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-4 h-px bg-primary-300/50" />
@@ -172,7 +195,13 @@ export default function FactsTab() {
       ) : (
         <>
           <div className="space-y-2">
-            {facts.map(f => <FactCard key={f.id} fact={f} />)}
+            {facts.map(f => (
+              <FactCard 
+                key={f.id} 
+                fact={f} 
+                onOpenDoc={handleOpenDocModal} // Передаем функцию
+              />
+            ))}
           </div>
 
           <div className="flex items-center justify-between pt-1">

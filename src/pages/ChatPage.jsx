@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { chatApi } from '../api'
+import { chatApi, voiceApi } from '../api'
 import SourceCard from '../components/SourceCard'
 import { useAuth } from '../hooks/useAuth'
 
+// ─── Sources toggle ────────────────────────────────────────────────────────────
 function SourcesToggle({ sources }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -26,6 +27,147 @@ function SourcesToggle({ sources }) {
   )
 }
 
+// ─── Mic button ────────────────────────────────────────────────────────────────
+function MicButton({ onTranscript, disabled }) {
+  const [recording, setRecording] = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const mediaRecorderRef          = useRef(null)
+  const chunksRef                 = useRef([])
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      chunksRef.current = []
+      const recorder = new MediaRecorder(stream)
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        setLoading(true)
+        try {
+          const text = await voiceApi.transcribe(blob)
+          if (text) onTranscript(text)
+        } catch (err) {
+          console.error('Transcription error:', err)
+        } finally {
+          setLoading(false)
+        }
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setRecording(true)
+    } catch (err) {
+      console.error('Mic access error:', err)
+    }
+  }
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop()
+    setRecording(false)
+  }
+
+  const handleClick = () => {
+    if (recording) stopRecording()
+    else startRecording()
+  }
+
+  if (loading) {
+    return (
+      <button disabled className="p-2.5 rounded-xl text-slate-400 bg-slate-100 self-end" title="Распознавание...">
+        <span className="w-4 h-4 border-2 border-slate-300 border-t-primary-600 rounded-full animate-spin inline-block" />
+      </button>
+    )
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={disabled}
+      title={recording ? 'Остановить запись' : 'Записать голос'}
+      className={`p-2.5 rounded-xl self-end transition-all duration-200 ${
+        recording
+          ? 'bg-red-500 text-white shadow-lg shadow-red-200 animate-pulse'
+          : 'text-slate-400 hover:text-primary-700 hover:bg-primary-50'
+      } disabled:opacity-40 disabled:cursor-not-allowed`}
+    >
+      {recording ? (
+        // Stop icon
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="3" y="3" width="10" height="10" rx="1.5"/>
+        </svg>
+      ) : (
+        // Mic icon
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="5" y="1" width="6" height="8" rx="3"/>
+          <path d="M2.5 8a5.5 5.5 0 0 0 11 0" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+          <line x1="8" y1="13.5" x2="8" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="5.5" y1="15" x2="10.5" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      )}
+    </button>
+  )
+}
+
+// ─── Speak button (TTS) ────────────────────────────────────────────────────────
+function SpeakButton({ text }) {
+  const [state, setState] = useState('idle') // idle | loading | playing
+  const audioRef          = useRef(null)
+
+  const handleClick = async () => {
+    // Stop if already playing
+    if (state === 'playing') {
+      audioRef.current?.pause()
+      audioRef.current = null
+      setState('idle')
+      return
+    }
+
+    setState('loading')
+    try {
+      const url = await voiceApi.synthesize(text)
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => { setState('idle'); URL.revokeObjectURL(url) }
+      audio.onerror = () => setState('idle')
+      await audio.play()
+      setState('playing')
+    } catch (err) {
+      console.error('TTS error:', err)
+      setState('idle')
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      title={state === 'playing' ? 'Остановить' : 'Прослушать ответ'}
+      className={`mt-1 flex items-center gap-1 text-[10px] font-medium transition-colors px-2 py-1 rounded-lg ${
+        state === 'playing'
+          ? 'text-primary-700 bg-primary-50'
+          : 'text-slate-400 hover:text-primary-600 hover:bg-slate-100'
+      }`}
+    >
+      {state === 'loading' ? (
+        <span className="w-3 h-3 border border-slate-300 border-t-primary-600 rounded-full animate-spin inline-block" />
+      ) : state === 'playing' ? (
+        // Pause icon
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="2" y="2" width="3" height="8" rx="0.5"/>
+          <rect x="7" y="2" width="3" height="8" rx="0.5"/>
+        </svg>
+      ) : (
+        // Speaker icon
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <path d="M2 4.5h2l3-2v7l-3-2H2z"/>
+          <path d="M8.5 3.5c.8.7 1.3 1.7 1.3 2.5s-.5 1.8-1.3 2.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+        </svg>
+      )}
+      {state === 'playing' ? 'Стоп' : state === 'loading' ? '' : 'Слушать'}
+    </button>
+  )
+}
+
+// ─── Main page ──────────────────────────────────────────────────────────────────
 export default function ChatPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -35,7 +177,7 @@ export default function ChatPage() {
   const [messages, setMessages]       = useState([])
   const [input, setInput]             = useState('')
   const [streaming, setStreaming]     = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false) // closed by default on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const bottomRef   = useRef(null)
   const textareaRef = useRef(null)
@@ -63,12 +205,9 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Lock body when mobile sidebar open
   useEffect(() => {
     const isMobile = window.innerWidth < 768
-    if (isMobile) {
-      document.body.style.overflow = sidebarOpen ? 'hidden' : ''
-    }
+    if (isMobile) document.body.style.overflow = sidebarOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [sidebarOpen])
 
@@ -91,9 +230,9 @@ export default function ChatPage() {
     } catch {}
   }
 
-  const sendMessage = async () => {
-    if (!input.trim() || streaming || !sessionId) return
-    const question = input.trim()
+  const sendMessage = async (overrideText) => {
+    const question = (overrideText ?? input).trim()
+    if (!question || streaming || !sessionId) return
     setInput('')
     setStreaming(true)
 
@@ -114,7 +253,7 @@ export default function ChatPage() {
         body: JSON.stringify({ content: question }),
       })
 
-      const reader = res.body.getReader()
+      const reader  = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
 
@@ -152,6 +291,12 @@ export default function ChatPage() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
+  // When mic transcription is ready, put text in input and optionally send
+  const handleTranscript = (text) => {
+    setInput(text)
+    textareaRef.current?.focus()
+  }
+
   const fmtDate = (iso) => {
     const d = new Date(iso)
     const today = new Date()
@@ -167,10 +312,7 @@ export default function ChatPage() {
 
       {/* Mobile backdrop */}
       {sidebarOpen && (
-        <div
-          className="drawer-backdrop md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="drawer-backdrop md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* ── Sidebar ── */}
@@ -182,7 +324,6 @@ export default function ChatPage() {
         transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0 drawer-panel shadow-2xl' : '-translate-x-full md:translate-x-0'}
       `}>
-        {/* Sidebar header */}
         <div className="p-3 border-b border-slate-200 flex items-center gap-2">
           <button
             onClick={newSession}
@@ -198,7 +339,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Sessions list */}
         <div className="flex-1 overflow-y-auto py-2 px-2">
           {titledSessions.length === 0 ? (
             <p className="text-xs text-slate-400 text-center mt-8 px-3">{t('chat.historyEmpty')}</p>
@@ -230,7 +370,6 @@ export default function ChatPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-white shrink-0">
-          {/* Sidebar toggle */}
           <button
             onClick={() => setSidebarOpen(v => !v)}
             className={`p-2 rounded-lg transition-colors ${
@@ -266,6 +405,9 @@ export default function ChatPage() {
               <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
                 {t('chat.emptySubtext')}
               </p>
+              <p className="text-xs text-slate-300 mt-2">
+                🎤 Вы можете говорить — нажмите на микрофон
+              </p>
             </div>
           )}
 
@@ -285,6 +427,12 @@ export default function ChatPage() {
                   ))}
                   {msg._streaming && msg.content && <span className="typing-cursor" />}
                 </div>
+
+                {/* TTS button for completed assistant messages */}
+                {msg.role === 'assistant' && !msg._streaming && msg.content && (
+                  <SpeakButton text={msg.content} />
+                )}
+
                 {msg.role === 'assistant' && <SourcesToggle sources={msg.sources} />}
               </div>
             </div>
@@ -295,6 +443,9 @@ export default function ChatPage() {
         {/* Input */}
         <div className="border-t border-slate-200 bg-white px-4 py-3 shrink-0">
           <div className="flex gap-2 items-end max-w-3xl mx-auto">
+            {/* Mic button */}
+            <MicButton onTranscript={handleTranscript} disabled={streaming} />
+
             <textarea
               ref={textareaRef}
               className="input flex-1 resize-none !py-2.5 !leading-relaxed text-sm"
@@ -306,7 +457,7 @@ export default function ChatPage() {
               disabled={streaming}
             />
             <button
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={streaming || !input.trim() || !sessionId}
               className="btn-primary self-end !px-3.5 !py-2.5 shrink-0"
             >

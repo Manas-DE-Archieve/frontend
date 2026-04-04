@@ -77,6 +77,60 @@ export const chatApi = {
   getMessages: (sessionId) => api.get(`/chat/sessions/${sessionId}`),
 };
 
+// ─── Voice API (speech-to-text & text-to-speech) ──────────────────────────────
+// Base URL for the voice service. Set VITE_VOICE_API_URL in your .env
+// e.g. VITE_VOICE_API_URL=http://localhost:8001
+const VOICE_BASE = '/voice'
+
+export const voiceApi = {
+  /**
+   * Send an audio Blob → returns transcribed text string.
+   * Calls POST /transcribe-voice on the voice service.
+   */
+  transcribe: async (audioBlob) => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'recording.webm');
+    const res = await fetch(`${VOICE_BASE}/transcribe-voice`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error(`ASR error: ${res.status}`);
+    const json = await res.json();
+    // The ASR service returns { status, data } where data may be string or { text: "..." }
+    if (json.status !== 'success') throw new Error('ASR failed');
+    const data = json.data;
+    if (typeof data === 'string') return data;
+    if (data?.text) return data.text;
+    // Fallback: stringify whatever came back
+    return JSON.stringify(data);
+  },
+
+  /**
+   * Send text → returns a blob URL (string) for audio playback.
+   * Calls POST /generate-voice on the voice service.
+   * Caller is responsible for revoking the URL via URL.revokeObjectURL().
+   */
+  synthesize: async (text) => {
+  const res = await fetch(`${VOICE_BASE}/generate-voice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error(`TTS error: ${res.status}`);
+  
+  // Проверяем что реально получили аудио
+  const contentType = res.headers.get('content-type');
+  console.log('TTS content-type:', contentType);
+  
+  const blob = await res.blob();
+  console.log('TTS blob size:', blob.size, 'type:', blob.type);
+  
+  // Принудительно указываем тип если сервер вернул неправильный
+  const audioBlob = new Blob([blob], { type: 'audio/mpeg' });
+  return URL.createObjectURL(audioBlob);
+},
+};
+
 export const adminApi = {
   listUsers: (params) => api.get('/admin/users', { params }),
   updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
