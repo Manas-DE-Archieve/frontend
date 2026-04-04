@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 const STATUS_CONFIG = {
@@ -32,29 +31,32 @@ const ArrowIcon = () => (
   </svg>
 )
 
-export default function PersonCard({ person }) {
+export default function PersonCard({ person, onClick }) {
   const { t } = useTranslation()
   const years = [person.birth_year, person.death_year].filter(Boolean).join('–')
   const sc = STATUS_CONFIG[person.status] || STATUS_CONFIG.pending
 
   return (
-    <Link
-      to={`/persons/${person.id}`}
+    <div
       className="animate-fade-in"
-      style={{ textDecoration: 'none', display: 'block' }}
+      style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}
+      onClick={() => onClick?.(person.id)}
     >
       <div
         className="card-hover"
         style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16 }}
       >
-        {/* Avatar placeholder */}
+        {/* Avatar */}
         <div style={{
           width: 46, height: 46, borderRadius: 12, flexShrink: 0,
           background: 'linear-gradient(135deg, #e8f4fd, #d0e8f8)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, border: '1px solid #c8dff0',
+          border: '1px solid #c8dff0', color: '#4a7fa5',
         }}>
-          🧑‍💼
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
         </div>
 
         {/* Main content */}
@@ -120,6 +122,6 @@ export default function PersonCard({ person }) {
           <ArrowIcon />
         </div>
       </div>
-    </Link>
+    </div>
   )
 }

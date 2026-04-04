@@ -8,6 +8,7 @@ import MapVisualization from '../components/MapVisualization'
 import Pagination from '../components/Pagination'
 import FactsTab from '../components/FactsTab'
 import StatsBar from '../components/StatsBar'
+import PersonModal from '../components/PersonModal'
 
 const PAGE_SIZE = 10
 
@@ -19,6 +20,7 @@ export default function HomePage() {
   const [page, setPage] = useState(1)
   const [params, setParams] = useState({})
   const [loading, setLoading] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState(null)
 
   const load = useCallback(async (searchParams, p = 1) => {
     setLoading(true)
@@ -124,7 +126,7 @@ export default function HomePage() {
                   <p style={{ color: '#b8c8d8', fontSize: 12, margin: 0 }}>{t('person.notFoundSubtext')}</p>
                 </div>
               ) : (
-                persons.map(p => <PersonCard key={p.id} person={p} />)
+                persons.map(p => <PersonCard key={p.id} person={p} onClick={setSelectedPersonId} />)
               )}
             </div>
             {totalPages > 1 && (
@@ -166,6 +168,12 @@ export default function HomePage() {
           .home-page-sidebar { order: 3; }
         }
       `}</style>
+      {selectedPersonId && (
+        <PersonModal
+          personId={selectedPersonId}
+          onClose={() => setSelectedPersonId(null)}
+        />
+      )}
     </div>
   )
 }
